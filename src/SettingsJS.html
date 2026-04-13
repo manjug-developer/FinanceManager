@@ -1,0 +1,83 @@
+<script>
+  function openThemeModal() {
+    const container = document.getElementById('themeOptions');
+    container.innerHTML = '';
+    const current = document.body.getAttribute('data-theme');
+    
+    themeData.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'theme-option';
+      div.onclick = () => applyTheme(t.name);
+      div.innerHTML = `
+        <div class="color-dot" style="background:${t.color}"></div>
+        <span class="flex-grow-1">${t.name}</span>
+        ${current === t.name ? '<span class="material-icons" style="color:#28a745">check_circle</span>' : ''}
+      `;
+      container.appendChild(div);
+    });
+    document.getElementById('modalOverlay').classList.add('active');
+    document.getElementById('themeModal').classList.add('active');
+  }
+
+  function closeThemeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+    document.getElementById('themeModal').classList.remove('active');
+  }
+
+  function applyTheme(name) {
+    // Apply UI change
+    document.body.setAttribute('data-theme', name);
+    document.getElementById('themeSubtitle').innerText = name;
+    closeThemeModal();
+    
+    // Save selection to Spreadsheet
+    google.script.run.saveUserSetting('Theme', name);
+    
+    // Refresh charts to match new theme colors
+    if (currentHomeData) renderHome(currentHomeData); 
+  }
+
+  function toggleFullScreen() {
+    const doc = window.document;
+    const docEl = doc.documentElement;
+
+    const requestFS = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+    const exitFS = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+    if (!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+      if (requestFS) {
+        requestFS.call(docEl);
+        google.script.run.saveUserSetting('FullScreen', 'true');
+      }
+    } else {
+      if (exitFS) {
+        exitFS.call(doc);
+        google.script.run.saveUserSetting('FullScreen', 'false');
+      }
+    }
+  }
+
+  function updateFSUI(forceState) {
+    const isFS = (forceState !== undefined) ? forceState : !!(document.fullscreenElement || document.webkitFullscreenElement);
+    const subtitle = document.getElementById('fsSubtitle');
+    const icon = document.getElementById('fsStatusIcon');
+    
+    if (isFS) {
+      if (subtitle) subtitle.innerText = "Full screen enabled";
+      if (icon) {
+        icon.innerText = "check_box";
+        icon.style.color = "#28a745";
+      }
+    } else {
+      if (subtitle) subtitle.innerText = "Enable full screen mode";
+      if (icon) {
+        icon.innerText = "check_box_outline_blank";
+        icon.style.color = "var(--text-sec)";
+      }
+    }
+  }
+
+  // Event listeners for browser fullscreen changes
+  document.addEventListener('fullscreenchange', () => updateFSUI());
+  document.addEventListener('webkitfullscreenchange', () => updateFSUI());
+</script>

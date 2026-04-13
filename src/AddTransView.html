@@ -1,0 +1,79 @@
+<div id="addTransOverlay" class="modal-overlay" onclick="closeAddTrans()"></div>
+<div id="addTransModal" class="full-height-modal">
+  <div class="modal-header d-flex align-items-center p-3">
+    <span class="material-icons me-3" onclick="closeAddTrans()" style="cursor:pointer; color: var(--accent);">close</span>
+    <h5 class="m-0 fw-bold">New Transaction</h5>
+  </div>
+
+  <div class="modal-body p-3">
+    <label class="small opacity-50 fw-bold text-uppercase mb-2 d-block">Transaction Type</label>
+    <div class="type-switcher-group mb-4">
+      <div id="btnTypeExp" class="type-pill active" data-type="Expense" onclick="setTransType('Expense')">
+        <span class="material-icons">north_east</span> Expense
+      </div>
+      <div id="btnTypeInc" class="type-pill" data-type="Income" onclick="setTransType('Income')">
+        <span class="material-icons">south_west</span> Income
+      </div>
+      <div id="btnTypeTrf" class="type-pill" data-type="Transfer" onclick="setTransType('Transfer')">
+        <span class="material-icons">sync_alt</span> Transfer
+      </div>
+    </div>
+
+    <div class="input-card mb-3">
+      <small class="card-label">Amount</small>
+      <div class="d-flex align-items-center mt-1">
+        <input type="number" id="atAmount" class="invisible-input flex-grow-1" placeholder="0.00" step="0.01">
+        <span class="material-icons opacity-50">calculate</span>
+      </div>
+      
+      <div class="divider my-3"></div>
+      
+      <div class="row">
+        <div class="col-6 border-end border-secondary border-opacity-25">
+           <small class="card-label">Date</small>
+           <input type="date" id="atDate" class="invisible-input small-text mt-1">
+        </div>
+        <div class="col-6 ps-3">
+           <small class="card-label">Time</small>
+           <input type="time" id="atTime" class="invisible-input small-text mt-1">
+        </div>
+      </div>
+
+      <div class="divider my-3"></div>
+
+      <small class="card-label">Notes</small>
+      <div class="d-flex align-items-center mt-1">
+        <span class="material-icons opacity-25 me-2" style="font-size:18px">edit_note</span>
+        <input type="text" id="atNotes" class="invisible-input small-text" placeholder="Add a description...">
+      </div>
+    </div>
+
+    <label class="small opacity-50 fw-bold text-uppercase mb-2 d-block">Details</label>
+    
+    <div class="selector-card mb-3" onclick="document.getElementById('atCategory').focus()">
+       <div class="d-flex align-items-center w-100">
+         <div class="icon-circle me-3" id="atCatIconBg"><span class="material-icons" id="atCatIcon">category</span></div>
+         <div class="flex-grow-1">
+           <small class="card-label d-block">Category</small>
+           <select id="atCategory" class="custom-select" onchange="updateAtCatIcon()"></select>
+         </div>
+         <span class="material-icons opacity-25">expand_more</span>
+       </div>
+    </div>
+
+    <div class="selector-card mb-4" onclick="document.getElementById('atAccount').focus()">
+       <div class="d-flex align-items-center w-100">
+         <div class="icon-circle me-3" style="background: #6366f1;"><span class="material-icons">account_balance_wallet</span></div>
+         <div class="flex-grow-1">
+           <small class="card-label d-block">Account</small>
+           <select id="atAccount" class="custom-select"></select>
+         </div>
+         <span class="material-icons opacity-25">expand_more</span>
+       </div>
+    </div>
+
+    <button class="btn btn-save w-100 p-3 mt-2" onclick="submitNewTransaction()">
+      <span class="material-icons me-2">check_circle</span> Save Transaction
+    </button>
+  </div>
+</div>

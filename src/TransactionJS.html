@@ -1,0 +1,205 @@
+<script>
+  let allTransactions = [];
+  let categoryMap = {};
+  let accountMap = {};
+  let currentFilterRange = 'All time';
+  let activeChips = { types: [], accounts: [], categories: [] };
+
+  function openTransEditModal(row) {
+  // Fill hidden ID (Assuming row[6] is your unique ID)
+  document.getElementById('editTransId').value = row[6];
+  
+  // Format date for input field (YYYY-MM-DD)
+  const d = new Date(row[0]);
+  const dateStr = d.toISOString().split('T')[0];
+  document.getElementById('editTransDate').value = dateStr;
+  
+  document.getElementById('editTransDesc').value = row[1];
+  document.getElementById('editTransAmt').value = row[3];
+  
+  // Populate Selects
+  const accSelect = document.getElementById('editTransAcc');
+  const catSelect = document.getElementById('editTransCat');
+  
+  accSelect.innerHTML = Object.keys(accountMap).map(id => 
+    `<option value="${id}" ${id == row[4] ? 'selected' : ''}>${accountMap[id].name}</option>`).join('');
+    
+  catSelect.innerHTML = Object.keys(categoryMap).map(id => 
+    `<option value="${id}" ${id == row[5] ? 'selected' : ''}>${categoryMap[id].name}</option>`).join('');
+
+  document.getElementById('transEditOverlay').classList.add('active');
+  document.getElementById('transEditModal').classList.add('active');
+}
+
+function closeTransEditModal() {
+  document.getElementById('transEditOverlay').classList.remove('active');
+  document.getElementById('transEditModal').classList.remove('active');
+}
+
+function processTransUpdate() {
+  const id = document.getElementById('editTransId').value;
+  const updatedRow = [
+    document.getElementById('editTransDate').value,
+    document.getElementById('editTransDesc').value,
+    allTransactions.find(t => t[6] === id)[2], // Keep original Type (Inc/Exp)
+    parseFloat(document.getElementById('editTransAmt').value),
+    document.getElementById('editTransAcc').value,
+    document.getElementById('editTransCat').value
+  ];
+
+  google.script.run.withSuccessHandler(() => {
+    closeTransEditModal();
+    loadTransactions(); // Refresh the list
+  }).updateTransaction(id, updatedRow);
+}
+
+function confirmDeleteTransaction() {
+  const id = document.getElementById('editTransId').value;
+  if (confirm("Are you sure you want to delete this transaction?")) {
+    google.script.run.withSuccessHandler(() => {
+      closeTransEditModal();
+      loadTransactions();
+    }).deleteTransaction(id);
+  }
+}
+
+  /** 1. Data Loading */
+  function loadTransactions() {
+    const timeline = document.getElementById('transactionTimeline');
+    timeline.innerHTML = '<div class="text-center mt-5 opacity-50">Loading live data...</div>';
+
+    google.script.run
+      .withSuccessHandler(data => {
+        allTransactions = data.transactions;
+        categoryMap = data.categories;
+        accountMap = data.accounts;
+        applyDateFilter('All time'); // Initial render
+        setupFilterUI();
+      })
+      .getTransactionData();
+  }
+
+  /** 2. Date Filtering */
+  function applyDateFilter(range) {
+    currentFilterRange = range;
+    document.getElementById('currentDateRange').innerText = range;
+    closeDateFilter();
+    runMasterFilter();
+  }
+
+  /** 3. Advanced Filtering Logic */
+  function setupFilterUI() {
+    const accBox = document.getElementById('filterAccounts');
+    const catBox = document.getElementById('filterCategories');
+    
+    accBox.innerHTML = Object.keys(accountMap).map(id => 
+      `<div class="chip" onclick="toggleChip(this, 'accounts', '${id}')">${accountMap[id].name}</div>`).join('');
+    
+    catBox.innerHTML = Object.keys(categoryMap).map(id => 
+      `<div class="chip" onclick="toggleChip(this, 'categories', '${id}')">${categoryMap[id].name}</div>`).join('');
+  }
+
+  function toggleChip(el, group, val) {
+    el.classList.toggle('active');
+    const list = activeChips[group];
+    const idx = list.indexOf(val);
+    if (idx > -1) list.splice(idx, 1);
+    else list.push(val);
+    
+    const count = activeChips.types.length + activeChips.accounts.length + activeChips.categories.length;
+    document.getElementById('activeFilterCount').innerText = `${count} filters selected`;
+  }
+
+  function runAdvancedFilter() {
+    closeAdvancedFilter();
+    runMasterFilter();
+  }
+
+  function clearAllFilters() {
+    activeChips = { types: [], accounts: [], categories: [] };
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    document.getElementById('activeFilterCount').innerText = `0 filters selected`;
+  }
+
+  /** 4. Master Filter & Render */
+  function runMasterFilter() {
+    const now = new Date();
+    
+    let filtered = allTransactions.filter(row => {
+      const d = new Date(row[0]);
+      
+      // Part A: Date Filter
+      if (currentFilterRange === 'Today' && d.toDateString() !== now.toDateString()) return false;
+      if (currentFilterRange === 'This Month' && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear())) return false;
+
+      // Part B: Chip Filters
+      if (activeChips.types.length > 0 && !activeChips.types.includes(row[2])) return false;
+      if (activeChips.accounts.length > 0 && !activeChips.accounts.includes(row[4])) return false;
+      if (activeChips.categories.length > 0 && !activeChips.categories.includes(row[5])) return false;
+
+      return true;
+    });
+
+    renderTimeline(filtered);
+  }
+
+  function renderTimeline(data) {
+    const container = document.getElementById('transactionTimeline');
+    container.innerHTML = '';
+
+    if (!data.length) {
+      container.innerHTML = '<div class="text-center mt-5 opacity-50">No transactions match your filters.</div>';
+      return;
+    }
+
+    // Grouping by Date
+    const groups = data.reduce((acc, row) => {
+      const d = new Date(row[0]).toISOString().split('T')[0];
+      if (!acc[d]) acc[d] = { items: [], total: 0 };
+      acc[d].items.push(row);
+      acc[d].total += (row[2] === 'Income' ? row[3] : -row[3]);
+      return acc;
+    }, {});
+
+    Object.keys(groups).sort((a,b) => new Date(b) - new Date(a)).forEach(dateKey => {
+      const group = groups[dateKey];
+      const d = new Date(dateKey);
+      
+      let html = `
+        <div class="day-group">
+          <div class="day-group-header">
+            <div class="d-flex align-items-center">
+              <div class="day-number">${d.getDate().toString().padStart(2,'0')}</div>
+              <div class="day-meta"><div>${d.toLocaleString('en-US',{month:'long',year:'numeric'})}</div><div>${d.toLocaleString('en-US',{weekday:'long'})}</div></div>
+            </div>
+            <div class="day-total ${group.total >=0 ? 'amt-income' : 'amt-expense'}">${group.total >=0 ? '+' : ''}${formatINR(group.total)}</div>
+          </div>`;
+
+      group.items.forEach(row => {
+        const cat = categoryMap[row[5]] || {name:'Unknown', icon:'help'};
+        const acc = accountMap[row[4]] || {name:'Unknown'};
+        html += `
+          <div class="trans-card" onclick='openAddTrans(${JSON.stringify(row)})'>
+            <div class="trans-icon-box"><span class="material-icons opacity-50">${cat.icon}</span></div>
+            <div class="trans-info">
+              <div class="trans-title">${cat.name}</div>
+              <div class="trans-sub">
+                <span class="material-icons" style="font-size:12px; color:var(--accent)">account_balance_wallet</span>
+                <span>${acc.name}</span><span class="mx-1">•</span><span class="text-truncate">${row[1]}</span>
+              </div>
+            </div>
+            <div class="trans-amt-box">
+              <div class="amt-val ${row[2] === 'Income' ? 'amt-income' : 'amt-expense'}">${row[2] === 'Income' ? '+' : '-'}${formatINR(row[3])}</div>
+            </div>
+          </div>`;
+      });
+      container.innerHTML += html + `</div>`;
+    });
+  }
+
+  // Modal Handlers
+  function openDateFilter() { document.getElementById('dateFilterOverlay').classList.add('active'); document.getElementById('dateFilterSheet').classList.add('active'); }
+  function closeDateFilter() { document.getElementById('dateFilterOverlay').classList.remove('active'); document.getElementById('dateFilterSheet').classList.remove('active'); }
+  function openAdvancedFilter() { document.getElementById('advFilterOverlay').classList.add('active'); document.getElementById('advFilterSheet').classList.add('active'); }
+  function closeAdvancedFilter() { document.getElementById('advFilterOverlay').classList.remove('active'); document.getElementById('advFilterSheet').classList.remove('active'); }
+</script>

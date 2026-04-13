@@ -1,0 +1,70 @@
+<script>
+  const themeData = [
+    { name: 'Dark', color: '#12141a' }, { name: 'Light', color: '#f5f7fa' },
+    { name: 'Ocean', color: '#0f172a' }, { name: 'Nature', color: '#061108' },
+    { name: 'Cosmos', color: '#0a0514' }, { name: 'Dessert', color: '#fffbeb' },
+    { name: 'Vintage', color: '#f4f1ea' }, { name: 'Cyberpunk', color: '#050505' },
+    { name: 'Nord', color: '#2e3440' }, { name: 'Matcha', color: '#f0f4f0' },
+    { name: 'Dracula', color: '#282a36' }, { name: 'Rose Gold', color: '#1a1616' }
+  ];
+
+  window.onload = () => {
+    // 1. Load User Settings
+    google.script.run.withSuccessHandler(settings => {
+      console.log("Settings applied:", settings);
+      
+      // Apply Theme to body immediately
+      if (settings.Theme) {
+        document.body.setAttribute('data-theme', settings.Theme);
+        const themeSub = document.getElementById('themeSubtitle');
+        if (themeSub) themeSub.innerText = settings.Theme;
+      }
+      
+      // Update Full Screen Toggle UI
+      if (settings.FullScreen === "true") {
+        if (typeof updateFSUI === 'function') updateFSUI(true);
+      }
+
+      // 2. Only load Home Data AFTER settings are processed
+      loadHomeData();
+      
+    }).getUserSettings();
+  };
+
+  function loadHomeData() {
+    google.script.run.withSuccessHandler(data => {
+      currentHomeData = data;
+      renderHome(data);
+    }).getHomeData();
+  }
+
+  function showView(viewName) {
+    document.querySelectorAll('.view-screen').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    
+    document.getElementById(viewName + 'View').classList.add('active');
+    // Highlight nav item
+    const navItems = document.querySelectorAll('.nav-item');
+    if(viewName === 'home') navItems[0].classList.add('active');
+    if(viewName === 'transaction') {
+      navItems[2].classList.add('active');
+      loadTransactions(); // Call the fetcher
+    }
+    if(viewName === 'category') {
+      navItems[3].classList.add('active');
+      loadCategories(); // Call the fetcher
+    }
+    if (viewName === 'analysis') {
+      navItems[1].classList.add('active');
+      loadAnalysis();
+    }
+  }
+
+  function formatINR(num) {
+    let n = Math.floor(num).toString().replace('-', '');
+    let lastThree = n.substring(n.length - 3);
+    let otherNumbers = n.substring(0, n.length - 3);
+    if (otherNumbers != '') lastThree = ',' + lastThree;
+    return (num < 0 ? '-' : '') + '₹' + otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+  }
+</script>

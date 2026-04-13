@@ -1,0 +1,135 @@
+<script>
+  console.log(MasterData.accounts);
+  const accIcons = ['account_balance', 'savings', 'payments', 'credit_card', 'wallet', 'account_balance_wallet'];
+  let currentAccId = null;
+
+  function openAccModal(id = null) {
+    if (id) {
+      showAccForm(id);
+    } else {
+      renderManageList();
+      showAccList();
+    }
+    document.getElementById('accModalOverlay').classList.add('active');
+    document.getElementById('accModal').classList.add('active');
+  }
+
+  function showAccList() {
+    document.getElementById('accListView').style.display = 'block';
+    document.getElementById('accFormView').style.display = 'none';
+    document.getElementById('accModalTitle').innerText = 'Manage Accounts';
+    document.getElementById('accBackBtn').innerText = 'close';
+    document.getElementById('accDeleteBtn').style.display = 'none';
+  }
+
+  function showAccForm(id = null) {
+    currentAccId = id;
+    document.getElementById('accListView').style.display = 'none';
+    document.getElementById('accFormView').style.display = 'block';
+    document.getElementById('accBackBtn').innerText = 'arrow_back';
+    
+    initAccIcons();
+
+    // Finding account in the MasterData array
+    const acc = MasterData.accounts.find(a => a.id === id);
+
+    if (id && acc) {
+      document.getElementById('accModalTitle').innerText = 'Edit Account';
+      document.getElementById('accDeleteBtn').style.display = 'block';
+      document.getElementById('accName').value = acc.name;
+      document.getElementById('accBalance').value = acc.balance;
+      document.getElementById('accIcon').value = acc.icon || 'account_balance';
+    } else {
+      document.getElementById('accModalTitle').innerText = 'New Account';
+      document.getElementById('accDeleteBtn').style.display = 'none';
+      document.getElementById('accName').value = '';
+      document.getElementById('accBalance').value = '';
+    }
+    updateIconSelection();
+  }
+
+  function handleAccBack() {
+    if (document.getElementById('accFormView').style.display === 'block') {
+      showAccList();
+      renderManageList();
+    } else {
+      closeAccModal();
+    }
+  }
+
+  function renderManageList() {
+    const container = document.getElementById('manageAccList');
+    let html = '';
+    console.log(testVariable);
+    MasterData.accounts.forEach(acc => {
+      html += `
+        <div class="manage-acc-item" onclick="showAccForm('${acc.id}')">
+          <div class="acc-icon-circle">
+            <span class="material-icons">${acc.icon || 'account_balance'}</span>
+          </div>
+          <div class="flex-grow-1">
+            <div class="fw-bold text-white">${acc.name}</div>
+            <div class="small opacity-50">₹${parseFloat(acc.balance).toLocaleString('en-IN')}</div>
+          </div>
+          <span class="material-icons opacity-25">chevron_right</span>
+        </div>`;
+    });
+    container.innerHTML = html || '<div class="text-center opacity-50 my-4">No accounts found</div>';
+  }
+
+  function initAccIcons() {
+    const container = document.getElementById('accIconList');
+    container.innerHTML = accIcons.map(icon => `
+      <div class="icon-option" data-icon="${icon}" onclick="selectAccIcon('${icon}', this)">
+        <span class="material-icons">${icon}</span>
+      </div>
+    `).join('');
+  }
+
+  function updateIconSelection() {
+    const current = document.getElementById('accIcon').value;
+    document.querySelectorAll('.icon-option').forEach(opt => {
+      opt.classList.toggle('selected', opt.getAttribute('data-icon') === current);
+    });
+  }
+
+  function selectAccIcon(icon, el) {
+    document.getElementById('accIcon').value = icon;
+    updateIconSelection();
+  }
+
+  function closeAccModal() {
+    document.getElementById('accModalOverlay').classList.remove('active');
+    document.getElementById('accModal').classList.remove('active');
+  }
+
+  function processAccSave() {
+    const data = {
+      name: document.getElementById('accName').value,
+      balance: document.getElementById('accBalance').value,
+      icon: document.getElementById('accIcon').value
+    };
+    if (!data.name) return alert("Enter account name");
+
+    const func = currentAccId ? 'updateAccount' : 'saveAccount';
+    google.script.run.withSuccessHandler(() => {
+      // Refresh MasterData globally, then refresh the list
+      getMasterData().then(() => {
+        showAccList();
+        renderManageList();
+        if (typeof renderHome === 'function') renderHome(MasterData);
+      });
+    })[func](currentAccId ? currentAccId : data, data);
+  }
+
+  function processAccDelete() {
+    if (!confirm("Delete this account?")) return;
+    google.script.run.withSuccessHandler(() => {
+      getMasterData().then(() => {
+        showAccList();
+        renderManageList();
+        if (typeof renderHome === 'function') renderHome(MasterData);
+      });
+    }).deleteAccount(currentAccId);
+  }
+</script>

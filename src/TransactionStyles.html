@@ -1,0 +1,23 @@
+<style>
+  /* Timeline Elements */
+  .day-group-header { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 25px; margin-bottom: 12px; }
+  .day-number { font-size: 32px; font-weight: 800; line-height: 0.9; margin-right: 12px; color: var(--text); }
+  .day-meta { font-size: 11px; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
+  .day-total { font-weight: 700; font-size: 15px; }
+
+  /* Transaction Cards */
+  .trans-card { background: var(--card-bg); border-radius: 18px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; border: 1px solid var(--border); }
+  .trans-icon-box { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; margin-right: 14px; border: 1px solid var(--border); }
+  .trans-info { flex-grow: 1; overflow: hidden; }
+  .trans-title { font-weight: 600; font-size: 14.5px; margin-bottom: 1px; color: var(--text); }
+  .trans-sub { font-size: 11px; color: var(--text-sec); display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .trans-amt-box { text-align: right; margin-left: 10px; min-width: 80px; }
+  
+  .amt-val { font-weight: 800; font-size: 15px; }
+  .amt-income { color: #28a745; }
+  .amt-expense { color: #ff5252; }
+
+  /* Chips */
+  .chip { padding: 7px 15px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); font-size: 12px; cursor: pointer; color: var(--text-sec); transition: 0.2s; }
+  .chip.active { background: rgba(37, 99, 235, 0.2); border-color: var(--accent); color: white; }
+</style>

@@ -1,0 +1,126 @@
+<script>
+  let currentHomeData = null;
+  let activeCharts = [];
+  const COLORS = ['#009688', '#5c6b73', '#689f38', '#e53935', '#1e88e5', '#795548', '#ffb300', '#f4511e'];
+
+  window.onload = () => google.script.run.withSuccessHandler(data => {
+    currentHomeData = data;
+    renderHome(data);
+  }).getHomeData();
+
+  function loadHome() {
+    google.script.run.withSuccessHandler(data => {
+      currentHomeData = data;
+      renderHome(data);
+    }).getHomeData();
+  }
+
+  function renderHome(data) {
+    document.getElementById('incomeText').innerText = formatINR(data.summary.income);
+    document.getElementById('expenseText').innerText = formatINR(data.summary.expense);
+    document.getElementById('totalText').innerText = formatINR(data.summary.total);
+
+    let accHtml = '';
+    data.accounts.forEach(acc => {
+      // Added onclick="openAccModal('${acc.id}')" and cursor:pointer
+      accHtml += `<div class="acc-card" style="cursor:pointer">
+        <div class="d-flex align-items-center mb-2">
+          <span class="material-icons me-2" style="font-size:16px; color:var(--text-sec)">${acc.icon}</span>
+          <span class="small fw-bold" style="color:var(--text-sec)">${acc.name}</span>
+        </div>
+        <h5 class="mb-1 fw-bold" style="color:${acc.balance >= 0 ? '#28a745' : '#dc3545'}">${formatINR(acc.balance)}</h5>
+        <div style="font-size:10px; opacity:0.6">Total In: ${formatINR(acc.totalIn)}</div>
+      </div>`;
+    });
+    document.getElementById('accountList').innerHTML = accHtml;
+
+    activeCharts.forEach(c => c.destroy());
+    activeCharts = [];
+
+    activeCharts.push(initInteractiveChart('expenseChart', 'categoryList', data.categories.filter(c => c.type === 'Expense'), 'Expense', data.summary.expense));
+    activeCharts.push(initInteractiveChart('incomeChart', 'incomeCategoryList', data.categories.filter(c => c.type === 'Income'), 'Income', data.summary.income));
+  }
+
+  function initInteractiveChart(canvasId, listId, cats, title, total) {
+    if (!cats.length) return;
+    const ctx = document.getElementById(canvasId);
+    cats.sort((a, b) => b.amount - a.amount);
+
+    const chart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: cats.map(c => c.name),
+        datasets: [{ data: cats.map(c => c.amount), backgroundColor: COLORS, borderWidth: 0 }]
+      },
+      plugins: [ChartDataLabels, {
+        id: 'centerText',
+        afterDraw: (chart) => {
+          const { ctx, width, height } = chart;
+          const textSec = getComputedStyle(document.body).getPropertyValue('--text-sec');
+          const textMain = getComputedStyle(document.body).getPropertyValue('--text');
+          ctx.restore();
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = textSec; ctx.font = '14px Segoe UI';
+          ctx.fillText(title, width / 2, height / 2 - 12);
+          ctx.fillStyle = textMain; ctx.font = 'bold 18px Segoe UI';
+          ctx.fillText(formatINR(total), width / 2, height / 2 + 12);
+          ctx.save();
+        }
+      }],
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: 45 },
+        cutout: '70%',
+        onClick: (evt, elements) => {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const target = document.getElementById(`${listId}_item_${index}`);
+            if (target) {
+              document.querySelectorAll('.category-item').forEach(el => el.classList.remove('highlight'));
+              target.classList.add('highlight');
+              target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setTimeout(() => target.classList.remove('highlight'), 2000);
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            color: '#fff', font: { size: 10, weight: 'bold' }, align: 'end', anchor: 'end', offset: 10,
+            formatter: (v, c) => `${c.chart.data.labels[c.dataIndex]}\n(${((v/total)*100).toFixed(0)}%)`
+          }
+        }
+      }
+    });
+
+    // Spin Logic
+    let isDragging = false, startAngle = 0, currentRotation = 0;
+    const getAngle = (x, y) => {
+      const rect = ctx.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2, centerY = rect.top + rect.height / 2;
+      return Math.atan2(y - centerY, x - centerX);
+    };
+    const start = (e) => { isDragging = true; const pos = e.touches ? e.touches[0] : e; startAngle = getAngle(pos.clientX, pos.clientY) - currentRotation; };
+    const move = (e) => {
+      if (!isDragging) return; e.preventDefault();
+      const pos = e.touches ? e.touches[0] : e;
+      currentRotation = getAngle(pos.clientX, pos.clientY) - startAngle;
+      chart.options.rotation = currentRotation * (180 / Math.PI);
+      chart.update('none');
+    };
+    const stop = () => isDragging = false;
+    ctx.addEventListener('mousedown', start); ctx.addEventListener('touchstart', start);
+    window.addEventListener('mousemove', move); window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('mouseup', stop); window.addEventListener('touchend', stop);
+
+    let listHtml = '';
+    cats.forEach((c, i) => {
+      listHtml += `<div id="${listId}_item_${i}" class="category-item d-flex justify-content-between">
+        <span><span class="material-icons align-middle me-2" style="font-size:14px; color:${COLORS[i%COLORS.length]}">${c.icon}</span>${c.name}</span>
+        <span class="fw-bold">${formatINR(c.amount)}</span>
+      </div>`;
+    });
+    document.getElementById(listId).innerHTML = listHtml;
+    return chart;
+  }
+</script>

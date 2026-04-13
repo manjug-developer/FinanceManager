@@ -1,0 +1,211 @@
+<style>
+  #analysisView .analysis-header {
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  #analysisView .analysis-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+
+  #analysisView .chart-wrapper {
+    position: relative;
+    height: 300px; /* Fixed height to prevent collapse */
+    width: 100%;
+  }
+
+  #analysisView .year-select {
+    background: #1a1a1a;
+    color: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 14px;
+  }
+
+  #analysisView .trend-toggle-btn {
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 5px 12px;
+  }
+</style>
+
+<div id="analysisView" class="view-screen">
+  <div class="header px-3 pt-3 analysis-header">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h2 class="m-0 fw-bold">Analysis</h2>
+      <select id="analysisYearPicker" class="year-select" onchange="loadAnalysis()">
+        <option value="All">All Years</option>
+        <option value="2026" selected>2026</option>
+        <option value="2025">2025</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="px-3 mt-3 pb-5">
+    <div class="analysis-card">
+      <h6 class="fw-bold mb-3 opacity-75">Account Performance</h6>
+      <div class="chart-wrapper">
+        <canvas id="analysisBarChartCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="analysis-card">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold m-0 opacity-75">Category Trends</h6>
+        <div class="btn-group">
+          <button id="anTrendExpBtn" class="btn btn-sm btn-outline-primary active trend-toggle-btn" onclick="setAnalysisTrendType('Expense')">Exp</button>
+          <button id="anTrendIncBtn" class="btn btn-sm btn-outline-primary trend-toggle-btn" onclick="setAnalysisTrendType('Income')">Inc</button>
+        </div>
+      </div>
+      
+      <select id="analysisCatFilter" class="form-select form-select-sm mb-3 bg-dark text-white border-secondary" onchange="renderAnalysisTrendChart()">
+        <option value="All">All Categories</option>
+      </select>
+
+      <div class="chart-wrapper">
+        <canvas id="analysisTrendChartCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Scoped variables to prevent collision with Home screen
+  let anBarChart = null;
+  let anTrendChart = null;
+  let anTrendType = 'Expense';
+
+  // Shared options for Analysis charts
+  const anChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#888', font: { size: 10 }, boxWidth: 10 } }
+    },
+    scales: {
+      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#666', font: { size: 10 } } },
+      x: { grid: { display: false }, ticks: { color: '#666', font: { size: 10 } } }
+    }
+  };
+
+  function loadAnalysis() {
+    // Check if view is active
+    if (document.getElementById('analysisView').style.display === 'none') return;
+
+    google.script.run.withSuccessHandler(data => {
+      // These are global variables likely defined in GlobalJS or TransactionJS
+      allTransactions = data.transactions;
+      categoryMap = data.categories;
+      accountMap = data.accounts;
+      
+      refreshAnalysisUI();
+    }).getTransactionData();
+  }
+
+  function setAnalysisTrendType(type) {
+    anTrendType = type;
+    document.getElementById('anTrendExpBtn').classList.toggle('active', type === 'Expense');
+    document.getElementById('anTrendIncBtn').classList.toggle('active', type === 'Income');
+    refreshAnalysisUI();
+  }
+
+  function refreshAnalysisUI() {
+    populateAnalysisDropdown();
+    renderAnalysisBarChart();
+    renderAnalysisTrendChart();
+  }
+
+  function populateAnalysisDropdown() {
+    const sel = document.getElementById('analysisCatFilter');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="All">All Categories</option>';
+    
+    Object.keys(categoryMap).forEach(id => {
+      if (categoryMap[id].type === anTrendType) {
+        sel.innerHTML += `<option value="${id}">${categoryMap[id].name}</option>`;
+      }
+    });
+    sel.value = prev || 'All';
+  }
+
+  function getFilteredAnData() {
+    const year = document.getElementById('analysisYearPicker').value;
+    return allTransactions.filter(t => {
+      const tYear = new Date(t[0]).getFullYear().toString();
+      return year === "All" || tYear === year;
+    });
+  }
+
+  function renderAnalysisBarChart() {
+    const data = getFilteredAnData();
+    const stats = {};
+    
+    data.forEach(t => {
+      const accId = t[4];
+      if (!stats[accId]) stats[accId] = { in: 0, out: 0 };
+      if (t[2] === 'Income') stats[accId].in += parseFloat(t[3]);
+      else stats[accId].out += parseFloat(t[3]);
+    });
+
+    const ctx = document.getElementById('analysisBarChartCanvas').getContext('2d');
+    if (anBarChart) anBarChart.destroy();
+    
+    anBarChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(stats).map(id => accountMap[id]?.name || 'Acc'),
+        datasets: [
+          { label: 'Income', data: Object.values(stats).map(s => s.in), backgroundColor: '#28a745', borderRadius: 4 },
+          { label: 'Expense', data: Object.values(stats).map(s => s.out), backgroundColor: '#ff5252', borderRadius: 4 }
+        ]
+      },
+      options: anChartOptions
+    });
+  }
+
+  function renderAnalysisTrendChart() {
+    const data = getFilteredAnData();
+    const selCat = document.getElementById('analysisCatFilter').value;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthlyMap = {};
+    const catNames = new Set();
+
+    data.forEach(t => {
+      const d = new Date(t[0]);
+      const mLabel = months[d.getMonth()];
+      const cId = t[5];
+      
+      if (t[2] === anTrendType && (selCat === 'All' || selCat === cId)) {
+        if (!monthlyMap[mLabel]) monthlyMap[mLabel] = {};
+        const cName = categoryMap[cId]?.name || 'Unknown';
+        monthlyMap[mLabel][cName] = (monthlyMap[mLabel][cName] || 0) + parseFloat(t[3]);
+        catNames.add(cName);
+      }
+    });
+
+    const datasets = Array.from(catNames).map((name, i) => ({
+      label: name,
+      data: months.map(m => monthlyMap[m]?.[name] || 0),
+      borderColor: `hsl(${(i * 60) % 360}, 65%, 55%)`,
+      tension: 0.3,
+      borderWidth: 2,
+      pointRadius: 2
+    }));
+
+    const ctx = document.getElementById('analysisTrendChartCanvas').getContext('2d');
+    if (anTrendChart) anTrendChart.destroy();
+    
+    anTrendChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: months, datasets: datasets },
+      options: anChartOptions
+    });
+  }
+</script>

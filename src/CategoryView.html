@@ -1,0 +1,46 @@
+<div id="categoryView" class="view-screen">
+  <div class="header px-3 pt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="m-0 fw-bold">Categories</h2>
+      <div class="add-btn-wrapper" onclick="openCategoryModal()">
+        <span class="material-icons">add</span>
+      </div>
+    </div>
+    
+    <div class="category-type-switcher d-flex p-1 mb-2">
+      <div id="viewTypeExp" class="type-btn active" onclick="switchCategoryView('Expense')">Expense</div>
+      <div id="viewTypeInc" class="type-btn" onclick="switchCategoryView('Income')">Income</div>
+    </div>
+  </div>
+
+  <div id="categoryListContainer" class="px-3 mt-3 pb-5"></div>
+</div>
+
+<div id="categoryModalOverlay" class="modal-overlay" onclick="closeCategoryModal()"></div>
+<div id="categoryModal" class="theme-modal">
+  <div class="modal-handle"></div>
+  
+  <div class="d-flex justify-content-between align-items-start mb-1">
+    <div>
+       <small id="catModalContext" class="text-uppercase fw-bold opacity-50" style="font-size: 10px; letter-spacing: 1px; color: var(--accent)"></small>
+       <h5 id="catModalTitle" class="fw-bold m-0">Add Category</h5>
+    </div>
+    <span id="deleteCatBtn" class="material-icons text-danger opacity-50" style="cursor:pointer; padding: 5px;" onclick="confirmDeleteCat()">delete</span>
+  </div>
+  
+  <hr class="opacity-10 my-3">
+  
+  <input type="hidden" id="editCatId">
+  
+  <div class="mb-4">
+    <label class="small opacity-50 fw-bold text-uppercase mb-2 d-block">Name</label>
+    <input type="text" id="catNameInput" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g. Salary or Rent">
+  </div>
+
+  <div class="mb-4">
+    <label class="small opacity-50 fw-bold text-uppercase mb-2 d-block">Select Icon</label>
+    <div class="icon-grid" id="iconPicker"></div>
+  </div>
+
+  <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm" onclick="processCategorySave()">Save Changes</button>
+</div>

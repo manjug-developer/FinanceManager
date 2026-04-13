@@ -1,0 +1,143 @@
+<script>
+  let masterCategories = [];
+  let currentViewType = 'Expense'; // Tracks the active tab
+  let selectedIcon = 'category';
+
+  const iconList = [
+  // --- FINANCE & SHOPPING ---
+  'payments', 'account_balance_wallet', 'savings', 'account_balance', 'trending_up', 
+  'receipt_long', 'toll', 'currency_exchange', 'shopping_cart', 'shopping_bag', 
+  'storefront', 'sell', 'credit_card', 'monetization_on', 'redeem', 'local_mall', 
+  'confirmation_number', 'loyalty', 'request_quote', 'price_check',
+
+  // --- FOOD & DINING ---
+  'restaurant', 'fastfood', 'local_cafe', 'local_bar', 'bakery_dining', 
+  'icecream', 'liquor', 'local_pizza', 'lunch_dining', 'dinner_dining', 
+  'ramen_dining', 'coffee', 'takeout_dining', 'cake', 'celebration',
+
+  // --- TRANSPORT & TRAVEL ---
+  'directions_car', 'local_gas_station', 'flight', 'directions_bus', 'directions_bike', 
+  'commute', 'train', 'tram', 'local_taxi', 'pedal_bike', 'moped', 
+  'electric_car', 'ev_station', 'flight_takeoff', 'hotel', 'explore',
+
+  // --- HOME & UTILITIES ---
+  'home', 'bolt', 'water_drop', 'wifi', 'smartphone', 'tv', 'ac_unit', 
+  'shelves', 'cleaning_services', 'local_laundry_service', 'construction', 
+  'handyman', 'plumbing', 'pest_control', 'router', 'living', 'bed',
+
+  // --- LIFESTYLE & HOBBIES ---
+  'fitness_center', 'sports_esports', 'pets', 'child_care', 'self_care', 
+  'spa', 'brush', 'movie', 'music_note', 'theater_comedy', 'piano', 
+  'camera_alt', 'palette', 'hiking', 'sports_soccer', 'sports_basketball',
+
+  // --- SERVICES & BILLS ---
+  'medical_services', 'medication', 'vaccines', 'school', 'menu_book', 
+  'science', 'psychology', 'work', 'subscriptions', 'vpn_key', 
+  'shield', 'history_edu', 'contact_mail', 'description', 'print',
+
+  // --- MISCELLANEOUS ---
+  'volunteer_activism', 'card_giftcard', 'auto_fix_high', 'style', 
+  'diamond', 'auto_awesome', 'support_agent', 'event', 'content_cut',
+  'styler', 'visibility', 'public', 'favorite', 'verified', 'error_outline',
+  'park', 'nature_people', 'beach_access', 'umbrella', 'face'
+];
+
+  function loadCategories() {
+    google.script.run.withSuccessHandler(data => {
+      masterCategories = data;
+      renderCategoryList();
+    }).getCategoryData();
+  }
+
+  function switchCategoryView(type) {
+    currentViewType = type;
+    document.getElementById('viewTypeExp').classList.toggle('active', type === 'Expense');
+    document.getElementById('viewTypeInc').classList.toggle('active', type === 'Income');
+    renderCategoryList();
+  }
+
+  function renderCategoryList() {
+    const container = document.getElementById('categoryListContainer');
+    const filtered = masterCategories.filter(c => c.type === currentViewType);
+    
+    if(filtered.length === 0) {
+      container.innerHTML = `<div class="text-center opacity-25 mt-5">No ${currentViewType} categories found</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(cat => `
+      <div class="cat-item-card" onclick='openCategoryModal(${JSON.stringify(cat)})'>
+        <div class="cat-icon-box"><span class="material-icons opacity-75">${cat.icon}</span></div>
+        <div class="flex-grow-1">
+          <div class="fw-bold" style="font-size:15px">${cat.name}</div>
+        </div>
+        <span class="material-icons opacity-25" style="font-size: 20px;">edit</span>
+      </div>
+    `).join('');
+  }
+
+  function openCategoryModal(cat = null) {
+    // 1. Set Context Label (Income or Expense)
+    const contextLabel = document.getElementById('catModalContext');
+    contextLabel.innerText = currentViewType + " Category";
+    contextLabel.style.color = currentViewType === 'Income' ? '#28a745' : '#2563eb';
+
+    // 2. Set Title and Inputs
+    document.getElementById('catModalTitle').innerText = cat ? 'Edit Details' : 'New Category';
+    document.getElementById('catNameInput').value = cat ? cat.name : '';
+    document.getElementById('editCatId').value = cat ? cat.id : '';
+    document.getElementById('deleteCatBtn').style.display = cat ? 'block' : 'none';
+    
+    selectedIcon = cat ? cat.icon : 'category';
+    renderIconPicker();
+    
+    document.getElementById('categoryModalOverlay').classList.add('active');
+    document.getElementById('categoryModal').classList.add('active');
+  }
+
+  function renderIconPicker() {
+    const container = document.getElementById('iconPicker');
+    container.innerHTML = iconList.map(icon => `
+      <div class="icon-option ${icon === selectedIcon ? 'selected' : ''}" onclick="selectIcon('${icon}')">
+        <span class="material-icons">${icon}</span>
+      </div>
+    `).join('');
+  }
+
+  function selectIcon(icon) {
+    selectedIcon = icon;
+    renderIconPicker();
+  }
+
+  function processCategorySave() {
+    const name = document.getElementById('catNameInput').value;
+    if (!name) return alert('Enter a category name');
+    
+    const catObj = {
+      id: document.getElementById('editCatId').value,
+      name: name,
+      type: currentViewType, 
+      icon: selectedIcon
+    };
+
+    google.script.run.withSuccessHandler(() => {
+      closeCategoryModal();
+      loadCategories();
+    }).saveCategory(catObj);
+  }
+
+  function confirmDeleteCat() {
+    const id = document.getElementById('editCatId').value;
+    if (confirm('Delete this category? Transactions using this category may be affected.')) {
+      google.script.run.withSuccessHandler(() => {
+        closeCategoryModal();
+        loadCategories();
+      }).deleteCategory(id);
+    }
+  }
+
+  function closeCategoryModal() {
+    document.getElementById('categoryModalOverlay').classList.remove('active');
+    document.getElementById('categoryModal').classList.remove('active');
+  }
+</script>

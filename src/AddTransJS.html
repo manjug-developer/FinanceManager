@@ -1,0 +1,108 @@
+<script>
+  let currentAtType = 'Expense';
+  let editingTransactionId = null; // Track if we are editing
+
+  function openAddTrans(existingData = null) {
+    const categories = typeof categoryMap !== 'undefined' ? categoryMap : {};
+    const accounts = typeof accountMap !== 'undefined' ? accountMap : {};
+
+    if (existingData) {
+      // EDIT MODE
+      editingTransactionId = existingData[6]; // ID column
+      document.getElementById('atAmount').value = existingData[3];
+      document.getElementById('atNotes').value = existingData[1];
+      document.getElementById('atDate').value = new Date(existingData[0]).toISOString().split('T')[0];
+      
+      // Update UI Header
+      document.querySelector('#addTransModal h5').innerText = "Edit Transaction";
+      setTransType(existingData[2]); 
+      
+      // Set dropdown values after they populate
+      setTimeout(() => {
+        document.getElementById('atCategory').value = existingData[5];
+        document.getElementById('atAccount').value = existingData[4];
+        updateAtCatIcon();
+      }, 50);
+
+    } else {
+      // NEW MODE
+      editingTransactionId = null;
+      document.getElementById('atAmount').value = '';
+      document.getElementById('atNotes').value = '';
+      document.getElementById('atDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('atTime').value = new Date().toTimeString().slice(0,5);
+      document.querySelector('#addTransModal h5').innerText = "New Transaction";
+      setTransType('Expense');
+    }
+    
+    document.getElementById('addTransOverlay').classList.add('active');
+    document.getElementById('addTransModal').classList.add('active');
+  }
+
+  function closeAddTrans() {
+    document.getElementById('addTransOverlay').classList.remove('active');
+    document.getElementById('addTransModal').classList.remove('active');
+  }
+
+  function setTransType(type) {
+    currentAtType = type;
+    document.querySelectorAll('.type-pill').forEach(p => p.classList.remove('active'));
+    const btn = document.getElementById('btnType' + type.substring(0,3));
+    if(btn) btn.classList.add('active');
+    populateAtDropdowns();
+  }
+
+  function populateAtDropdowns() {
+    const catSel = document.getElementById('atCategory');
+    const accSel = document.getElementById('atAccount');
+    const categories = typeof categoryMap !== 'undefined' ? categoryMap : {};
+    const accounts = typeof accountMap !== 'undefined' ? accountMap : {};
+    
+    let catHtml = '';
+    for (let id in categories) {
+      if (categories[id].type === currentAtType) {
+        catHtml += `<option value="${id}">${categories[id].name}</option>`;
+      }
+    }
+    catSel.innerHTML = catHtml || '<option value="">No Categories</option>';
+    
+    let accHtml = '';
+    for (let id in accounts) {
+      accHtml += `<option value="${id}">${accounts[id].name}</option>`;
+    }
+    accSel.innerHTML = accHtml || '<option value="">No Accounts</option>';
+    updateAtCatIcon();
+  }
+
+  function updateAtCatIcon() {
+    const catId = document.getElementById('atCategory').value;
+    const categories = typeof categoryMap !== 'undefined' ? categoryMap : {};
+    if (categories[catId]) {
+      document.getElementById('atCatIcon').innerText = categories[catId].icon || 'category';
+    }
+  }
+
+  function submitNewTransaction() {
+    const amount = document.getElementById('atAmount').value;
+    if (!amount || amount <= 0) return alert("Enter valid amount");
+
+    const formData = {
+      id: editingTransactionId, // Will be null for new, ID for edit
+      type: currentAtType,
+      amount: amount,
+      date: document.getElementById('atDate').value,
+      notes: document.getElementById('atNotes').value,
+      categoryId: document.getElementById('atCategory').value,
+      accountId: document.getElementById('atAccount').value
+    };
+
+    // If editingTransactionId exists, call update, else call save
+    const serverFunction = editingTransactionId ? 'updateTransaction' : 'saveNewTransaction';
+
+    google.script.run.withSuccessHandler(() => {
+      closeAddTrans();
+      if (typeof loadTransactions === 'function') loadTransactions();
+      if (typeof loadHome === 'function') loadHome();
+    })[serverFunction](editingTransactionId ? editingTransactionId : formData, editingTransactionId ? [formData.date, formData.notes, formData.type, formData.amount, formData.accountId, formData.categoryId] : formData);
+  }
+</script>

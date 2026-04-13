@@ -1,0 +1,101 @@
+<style>
+  .full-height-modal {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: #0f1115;
+    z-index: 3000;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0s;
+    overflow-y: auto;
+    display: block;
+  }
+  .full-height-modal.active {
+    bottom: 0;
+    transform: translateY(0);
+  }
+
+  .modal-header {
+    background: #161a22;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .type-switcher-group {
+    background: #1c1f26;
+    border: 1px solid #2d323e;
+    border-radius: 14px;
+    display: flex;
+    padding: 5px;
+  }
+  .type-pill {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  
+  /* Active States */
+  .type-pill.active[data-type="Expense"] { background: #452727; color: #ff5252; }
+  .type-pill.active[data-type="Income"] { background: #1b3324; color: #28a745; }
+  .type-pill.active[data-type="Transfer"] { background: #1e2a3d; color: #3b82f6; }
+
+  .input-card, .selector-card {
+    background: #1c1f26;
+    border: 1px solid #2d323e;
+    border-radius: 20px;
+    padding: 18px;
+  }
+  
+  .divider { height: 1px; background: rgba(255,255,255,0.05); width: 100%; }
+  
+  .invisible-input {
+    background: transparent;
+    border: none;
+    color: white;
+    width: 100%;
+    outline: none;
+    font-size: 28px;
+    font-weight: 700;
+  }
+  .small-text { font-size: 15px; font-weight: normal; }
+
+  .custom-select {
+    background: transparent;
+    border: none;
+    color: white;
+    width: 100%;
+    outline: none;
+    font-weight: 600;
+    font-size: 16px;
+    appearance: none;
+  }
+
+  .icon-circle {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+  }
+
+  .btn-save {
+    background: var(--accent);
+    color: white;
+    border-radius: 18px;
+    font-weight: bold;
+    border: none;
+    font-size: 16px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  }
+</style>

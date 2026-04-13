@@ -1,0 +1,34 @@
+<div id="settingsView" class="view-screen">
+  <div class="header">
+    <div class="d-flex align-items-center">
+      <span class="material-icons me-3" onclick="showView('home')" style="cursor: pointer;">arrow_back</span>
+      <h2 class="m-0 fw-bold">Settings</h2>
+    </div>
+  </div>
+
+  <div class="settings-group-label" style="color: var(--text-sec); font-size: 11px; font-weight: 700; letter-spacing: 1px; margin: 20px 5px 10px; text-transform: uppercase;">GENERAL</div>
+  
+  <div class="settings-list">
+    <div class="settings-item" onclick="openThemeModal()">
+      <div class="settings-icon-wrapper">
+        <span class="material-icons" style="font-size: 20px;">palette</span>
+      </div>
+      <div class="settings-content flex-grow-1">
+        <span class="settings-title">Theme</span>
+        <small id="themeSubtitle" style="color: var(--text-sec)">Dark</small>
+      </div>
+      <span class="material-icons" style="color: var(--text-sec)">chevron_right</span>
+    </div>
+
+    <div class="settings-item" onclick="toggleFullScreen()">
+      <div class="settings-icon-wrapper">
+        <span class="material-icons" style="font-size: 20px;">fullscreen</span>
+      </div>
+      <div class="settings-content flex-grow-1">
+        <span class="settings-title">Full Screen</span>
+        <small id="fsSubtitle" style="color: var(--text-sec)">Enable full screen mode</small>
+      </div>
+      <span id="fsStatusIcon" class="material-icons" style="color: var(--text-sec)">check_box_outline_blank</span>
+    </div>
+  </div>
+</div>

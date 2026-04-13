@@ -1,0 +1,43 @@
+<div id="accModalOverlay" class="modal-overlay" onclick="closeAccModal()"></div>
+
+<div id="accModal" class="full-height-modal">
+  <div class="modal-header d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center">
+      <span class="material-icons me-3" id="accBackBtn" onclick="handleAccBack()" style="cursor:pointer; color: #3b82f6;">close</span>
+      <h5 class="m-0 fw-bold" id="accModalTitle">Manage Accounts</h5>
+    </div>
+    <span id="accDeleteBtn" class="material-icons text-danger" style="display:none; cursor:pointer" onclick="processAccDelete()">delete</span>
+  </div>
+
+  <div class="modal-body">
+    <div id="accListView">
+      <div id="manageAccList"></div>
+      <button class="btn w-100 py-3 mt-4 rounded-pill fw-bold" 
+              style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px dashed #3b82f6;" 
+              onclick="showAccForm()">
+        <span class="material-icons align-middle me-1">add_circle</span> Add New Account
+      </button>
+    </div>
+
+    <div id="accFormView" style="display:none;">
+      <div class="acc-input-group">
+        <label>Account Details</label>
+        <input type="text" id="accName" class="acc-invisible-input mb-3" placeholder="Account Name">
+        <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 0;"></div>
+        <label class="mt-2">Initial Balance</label>
+        <div class="d-flex align-items-center">
+          <span class="me-2 fw-bold opacity-50">₹</span>
+          <input type="number" id="accBalance" class="acc-invisible-input" placeholder="0.00">
+        </div>
+      </div>
+
+      <label class="small opacity-50 fw-bold text-uppercase mb-3 d-block">Select Icon</label>
+      <div class="d-flex gap-3 flex-wrap mb-5" id="accIconList"></div>
+      <input type="hidden" id="accIcon" value="account_balance_wallet">
+
+      <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold" style="background: #3b82f6; border: none;" onclick="processAccSave()">
+        <span class="material-icons align-middle me-1">save</span> Save Account
+      </button>
+    </div>
+  </div>
+</div>
