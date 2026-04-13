@@ -3,11 +3,6 @@
   let activeCharts = [];
   const COLORS = ['#009688', '#5c6b73', '#689f38', '#e53935', '#1e88e5', '#795548', '#ffb300', '#f4511e'];
 
-  window.onload = () => google.script.run.withSuccessHandler(data => {
-    currentHomeData = data;
-    renderHome(data);
-  }).getHomeData();
-
   function loadHome() {
     google.script.run.withSuccessHandler(data => {
       currentHomeData = data;

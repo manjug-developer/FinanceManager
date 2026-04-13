@@ -8,7 +8,20 @@
     { name: 'Dracula', color: '#282a36' }, { name: 'Rose Gold', color: '#1a1616' }
   ];
 
+  // Global show/hide logic
+  function showLoader() {
+    const loader = document.getElementById('global-loader');
+    if(loader) loader.style.display = 'block';
+  }
+
+  function hideLoader() {
+    const loader = document.getElementById('global-loader');
+    if(loader) loader.style.display = 'none';
+  }
+
+
   window.onload = () => {
+    showLoader();
     // 1. Load User Settings
     google.script.run.withSuccessHandler(settings => {
       console.log("Settings applied:", settings);
@@ -24,7 +37,6 @@
       if (settings.FullScreen === "true") {
         if (typeof updateFSUI === 'function') updateFSUI(true);
       }
-
       // 2. Only load Home Data AFTER settings are processed
       loadHomeData();
       
@@ -33,6 +45,7 @@
 
   function loadHomeData() {
     google.script.run.withSuccessHandler(data => {
+      hideLoader();
       currentHomeData = data;
       renderHome(data);
     }).getHomeData();

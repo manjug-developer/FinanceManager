@@ -67,9 +67,10 @@ function confirmDeleteTransaction() {
   function loadTransactions() {
     const timeline = document.getElementById('transactionTimeline');
     timeline.innerHTML = '<div class="text-center mt-5 opacity-50">Loading live data...</div>';
-
+    showLoader();
     google.script.run
       .withSuccessHandler(data => {
+        hideLoader();
         allTransactions = data.transactions;
         categoryMap = data.categories;
         accountMap = data.accounts;
@@ -81,10 +82,12 @@ function confirmDeleteTransaction() {
 
   /** 2. Date Filtering */
   function applyDateFilter(range) {
+    showLoader();
     currentFilterRange = range;
     document.getElementById('currentDateRange').innerText = range;
     closeDateFilter();
     runMasterFilter();
+    hideLoader();
   }
 
   /** 3. Advanced Filtering Logic */

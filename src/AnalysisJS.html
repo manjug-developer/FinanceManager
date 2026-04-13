@@ -5,12 +5,13 @@
   function loadAnalysis() {
     // Only proceed if we are actually looking at the analysis view
     if (document.getElementById('analysisView').style.display === 'none') return;
-
     if (typeof allTransactions === 'undefined') {
+      showLoader();
       google.script.run.withSuccessHandler(data => {
         allTransactions = data.transactions;
         accountMap = data.accounts;
         renderAnalysisBarChart();
+        hideLoader();
       }).getTransactionData();
     } else {
       renderAnalysisBarChart();

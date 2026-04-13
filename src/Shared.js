@@ -34,7 +34,7 @@ function getSheetDataAsObjects(sheetName) {
   });
 }
 
-function loadSharedData() {
+function loadMasterData() {
   const transactions = getSheetDataAsObjects('Transactions');
   const categories = getSheetDataAsObjects('Categories');
   const accounts = getSheetDataAsObjects('Accounts');

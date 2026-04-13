@@ -41,8 +41,8 @@
     <div class="d-flex justify-content-between align-items-center mb-2">
       <h2 class="m-0 fw-bold">Analysis</h2>
       <select id="analysisYearPicker" class="year-select" onchange="loadAnalysis()">
-        <option value="All">All Years</option>
-        <option value="2026" selected>2026</option>
+        <option value="All" selected>All Years</option>
+        <option value="2026">2026</option>
         <option value="2025">2025</option>
       </select>
     </div>
@@ -98,7 +98,7 @@
   function loadAnalysis() {
     // Check if view is active
     if (document.getElementById('analysisView').style.display === 'none') return;
-
+    showLoader();
     google.script.run.withSuccessHandler(data => {
       // These are global variables likely defined in GlobalJS or TransactionJS
       allTransactions = data.transactions;
@@ -106,6 +106,7 @@
       accountMap = data.accounts;
       
       refreshAnalysisUI();
+      hideLoader();
     }).getTransactionData();
   }
 

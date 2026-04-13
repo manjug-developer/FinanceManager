@@ -1,46 +1,4 @@
 <script>
-  // Initialize global variables
-
-  const MasterData = {
-    transactions: [],
-    categories: [],
-    accounts: [],
-    userSettings: []
-  };
-
-  const testVariable = 'Manju G'
-
-  google.script.run
-    .withSuccessHandler(data => {
-      // Update your global object
-      MasterData.transactions = data.trans;
-      MasterData.categories = data.cat;
-      MasterData.accounts = data.acc;
-      MasterData.userSettings = data.usrstng;
-      console.log("Master data loaded successfully");
-    })
-
-  /*
-  function getMasterData() {
-    return new Promise((resolve, reject) => {
-      google.script.run
-        .withSuccessHandler(data => {
-          // Update your global object
-          MasterData.transactions = data.trans;
-          MasterData.categories = data.cat;
-          MasterData.accounts = data.acc;
-          MasterData.userSettings = data.usrstng;
-          console.log("Master data loaded successfully");
-          // Resolve the promise so the caller knows we are done
-          resolve(MasterData);
-        })
-        .withFailureHandler(err => {
-          console.error("Data load failed:", err);
-          reject(err);
-        })
-        .loadSharedData();
-    });
-  }*/
-
-  //getMasterData();
+  // GLOBAL MEMORY
+  window.MasterData = null;
 </script>
