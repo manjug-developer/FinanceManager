@@ -10,6 +10,67 @@
     }).getHomeData();
   }
 
+  /**
+ * Processes raw data into summary, account balances, and category totals.
+ * @param {Array} transactions - The raw transactions array (excluding headers).
+ * @param {Array} categories - The raw categories array (excluding headers).
+ * @param {Array} accounts - The raw accounts array (excluding headers).
+ */
+function constructHomeData(transactions, categories, accounts) {
+  let summary = { income: 0, expense: 0, total: 0 };
+  let accountBalances = {};
+  let catMap = {};
+
+  // 1. Initialize Categories Map
+  categories.forEach(c => {
+    catMap[c[0]] = { 
+      name: c[1], 
+      type: c[2], 
+      icon: c[3] || 'category', 
+      amount: 0 
+    };
+  });
+
+  // 2. Initialize Accounts Map
+  accounts.forEach(acc => {
+    accountBalances[acc[0]] = { 
+      name: acc[1], 
+      icon: acc[2] || 'account_balance', 
+      balance: 0, 
+      totalIn: 0 
+    };
+  });
+
+  // 3. Process Transactions
+  transactions.forEach(row => {
+    // Assuming indices match your backend: row[3]=Amount, row[4]=AccID, row[5]=CatID
+    const amount = parseFloat(row[3]) || 0;
+    const accID = row[4];
+    const catID = row[5];
+    const catInfo = catMap[catID];
+
+    if (catInfo && accountBalances[accID]) {
+      if (catInfo.type === 'Income') {
+        summary.income += amount;
+        accountBalances[accID].balance += amount;
+        accountBalances[accID].totalIn += amount;
+      } else {
+        summary.expense += amount;
+        accountBalances[accID].balance -= amount;
+      }
+      catMap[catID].amount += amount;
+    }
+  });
+
+  summary.total = summary.income - summary.expense;
+
+  return {
+    summary: summary,
+    accounts: Object.values(accountBalances),
+    categories: Object.values(catMap).filter(c => c.amount > 0)
+  };
+}
+
   function renderHome(data) {
     document.getElementById('incomeText').innerText = formatINR(data.summary.income);
     document.getElementById('expenseText').innerText = formatINR(data.summary.expense);

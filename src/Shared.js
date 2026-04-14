@@ -24,21 +24,20 @@ function getSheetDataAsObjects(sheetName) {
     headers.forEach((header, index) => {
       // Map each header to the corresponding column value
       // check for the Date value if yes convert it to date string
-      if(header == 'Date') {
-        obj[header] = row[index].toISOString();
-      } else {
-        obj[header] = row[index];
-      }
+      obj[header] = row[index];
     });
     return obj;
   });
 }
 
+
+
 function loadMasterData() {
-  const transactions = getSheetDataAsObjects('Transactions');
-  const categories = getSheetDataAsObjects('Categories');
-  const accounts = getSheetDataAsObjects('Accounts');
-  const userSettings = getSheetDataAsObjects('UserSettings');
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const transactions = ss.getSheetByName('Transactions').getDataRange().getValues();
+  const categories = ss.getSheetByName('Categories').getDataRange().getValues();
+  const accounts = ss.getSheetByName('Accounts').getDataRange().getValues();
+  const userSettings = ss.getSheetByName('UserSettings').getDataRange().getValues();
   return {transactions,categories,accounts,userSettings};
 }
 

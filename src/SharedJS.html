@@ -1,4 +1,49 @@
 <script>
   // GLOBAL MEMORY
   window.MasterData = null;
+  /**
+ * Converts a 2D array (Key-Value pairs) into a single Object.
+ * @param {Array[]} data - The 2D array from SpreadsheetApp.
+ * @returns {Object} - A flattened object.
+ */
+  function arrayToMap(data) {
+    const result = {};
+
+    data.forEach(row => {
+      const key = row[0];
+      const value = row[1];
+
+      // Only add to object if the key exists and isn't empty
+      if (key !== undefined && key !== null && key !== "") {
+        result[key] = value;
+      }
+    });
+
+    return result;
+  }
+
+  /**
+ * Converts a 2D array into an Array of Objects.
+ * The first row of the data is used as the keys for the objects.
+ * @param {Array[]} data - The 2D array (from getValues()).
+ * @returns {Object[]} - Array of objects with header keys.
+ */
+function arrayToObjects(data) {
+  console.log("Array To Objects Function",data);
+  if (!data || data.length < 2) return [];
+
+  // 1. Extract headers (e.g., ["id", "name", "type", "icon"])
+  const headers = data[0];
+
+  // 2. Map the remaining rows into objects
+  return data.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((header, index) => {
+      // Use the header string as the key and the row's column value as the value
+      obj[header] = row[index];
+    });
+    return obj;
+  });
+}
+
 </script>

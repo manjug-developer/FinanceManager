@@ -1,5 +1,5 @@
 <script>
-  let masterCategories = [];
+  let currentCategoriesData = [];
   let currentViewType = 'Expense'; // Tracks the active tab
   let selectedIcon = 'category';
 
@@ -44,11 +44,18 @@
 
   function loadCategories() {
     showLoader();
-    google.script.run.withSuccessHandler(data => {
-      masterCategories = data;
-      renderCategoryList();
-      hideLoader();
-    }).getCategoryData();
+    // google.script.run.withSuccessHandler(data => {
+    //   currentCategoriesData = data;
+    //   renderCategoryList();
+    //   hideLoader();
+    // }).getCategoryData();
+    
+
+    currentCategoriesData = arrayToObjects([['id', 'name', 'type', 'icon']].concat(window.MasterData.categories.slice(1))); // Skip header row
+    console.log("Loading categories from MasterData", currentCategoriesData);
+    renderCategoryList();
+    hideLoader();
+
   }
 
   function switchCategoryView(type) {
@@ -60,7 +67,7 @@
 
   function renderCategoryList() {
     const container = document.getElementById('categoryListContainer');
-    const filtered = masterCategories.filter(c => c.type === currentViewType);
+    const filtered = currentCategoriesData.filter(c => c.type === currentViewType);
     
     if(filtered.length === 0) {
       container.innerHTML = `<div class="text-center opacity-25 mt-5">No ${currentViewType} categories found</div>`;

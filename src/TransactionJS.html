@@ -5,6 +5,54 @@
   let currentFilterRange = 'All time';
   let activeChips = { types: [], accounts: [], categories: [] };
 
+  function constructTransactionData() {
+    const monthMap = {
+      Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06',
+      Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+    };
+
+    // .slice(1) removes the ['ID', 'Date', ...] header row
+    const formattedTransactions = window.MasterData.transactions.slice(1).map(row => {
+      // 1. Format the Date from '30-Sep-2019' to '2019-09-30'
+      const [day, month, year] = row[1].split('-');
+      const isoDate = `${year}-${monthMap[month]}-${day}`;
+
+      // 2. Return the new structure
+      return [
+        isoDate,   // New Date
+        row[6],    // Notes
+        row[2],    // Type
+        row[3],    // Amount
+        row[4],    // Account
+        row[5]     // Category
+      ];
+    });
+
+    const formattedCategories = window.MasterData.categories.slice(1).reduce((acc, row) => {
+        const [id, name, type, icon] = row;
+        acc[id] = { 
+            name: name, 
+            icon: icon 
+        };
+        return acc;
+    }, {});
+
+    const formattedAccounts = window.MasterData.accounts.slice(1).reduce((acc, row) => {
+        // row[0] is AccountID, row[1] is AccountName
+        acc[row[0]] = { 
+            name: row[1] 
+        };
+        
+        return acc;
+    }, {});
+
+    return {
+      transactions: formattedTransactions,
+      categories: formattedCategories,
+      accounts: formattedAccounts
+    };
+  }
+
   function openTransEditModal(row) {
   // Fill hidden ID (Assuming row[6] is your unique ID)
   document.getElementById('editTransId').value = row[6];
@@ -68,16 +116,27 @@ function confirmDeleteTransaction() {
     const timeline = document.getElementById('transactionTimeline');
     timeline.innerHTML = '<div class="text-center mt-5 opacity-50">Loading live data...</div>';
     showLoader();
-    google.script.run
-      .withSuccessHandler(data => {
-        hideLoader();
-        allTransactions = data.transactions;
-        categoryMap = data.categories;
-        accountMap = data.accounts;
-        applyDateFilter('All time'); // Initial render
-        setupFilterUI();
-      })
-      .getTransactionData();
+    // console.log(constructTransactionData());
+    // google.script.run
+    //   .withSuccessHandler(data => {
+    //     hideLoader();
+    //     allTransactions = data.transactions;
+    //     categoryMap = data.categories;
+    //     accountMap = data.accounts;
+    //     applyDateFilter('All time'); // Initial render
+    //     setupFilterUI();
+    //   }).getTransactionData();
+
+
+    setTimeout(() => {
+      hideLoader();
+      const data = constructTransactionData();
+      allTransactions = data.transactions;
+      categoryMap = data.categories;
+      accountMap = data.accounts;
+      applyDateFilter('All time'); // Initial render
+      setupFilterUI();
+    }, 0);
   }
 
   /** 2. Date Filtering */
