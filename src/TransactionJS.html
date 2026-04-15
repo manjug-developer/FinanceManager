@@ -114,7 +114,7 @@ function confirmDeleteTransaction() {
   /** 1. Data Loading */
   function loadTransactions() {
     const timeline = document.getElementById('transactionTimeline');
-    timeline.innerHTML = '<div class="text-center mt-5 opacity-50">Loading live data...</div>';
+    timeline.innerHTML = '<div class="text-center mt-5 opacity-50">Loading transactions...</div>';
     showLoader();
     // console.log(constructTransactionData());
     // google.script.run
@@ -142,11 +142,13 @@ function confirmDeleteTransaction() {
   /** 2. Date Filtering */
   function applyDateFilter(range) {
     showLoader();
+    closeDateFilter();
     currentFilterRange = range;
     document.getElementById('currentDateRange').innerText = range;
-    closeDateFilter();
-    runMasterFilter();
-    hideLoader();
+    setTimeout(() => {
+      runMasterFilter();
+      hideLoader();
+    }, 0);
   }
 
   /** 3. Advanced Filtering Logic */
@@ -173,8 +175,12 @@ function confirmDeleteTransaction() {
   }
 
   function runAdvancedFilter() {
+    showLoader();
     closeAdvancedFilter();
-    runMasterFilter();
+    setTimeout(() => {
+      runMasterFilter();
+      hideLoader();
+    }, 0);
   }
 
   function clearAllFilters() {

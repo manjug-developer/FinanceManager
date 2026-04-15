@@ -34,6 +34,7 @@ function constructHomeData(transactions, categories, accounts) {
   // 2. Initialize Accounts Map
   accounts.forEach(acc => {
     accountBalances[acc[0]] = { 
+      id: acc[0],
       name: acc[1], 
       icon: acc[2] || 'account_balance', 
       balance: 0, 

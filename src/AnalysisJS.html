@@ -7,12 +7,19 @@
     if (document.getElementById('analysisView').style.display === 'none') return;
     if (typeof allTransactions === 'undefined') {
       showLoader();
-      google.script.run.withSuccessHandler(data => {
+      // google.script.run.withSuccessHandler(data => {
+      //   allTransactions = data.transactions;
+      //   accountMap = data.accounts;
+      //   renderAnalysisBarChart();
+      //   hideLoader();
+      // }).getTransactionData();
+      setTimeout(() => {
+        const data = constructTransactionData();
         allTransactions = data.transactions;
         accountMap = data.accounts;
         renderAnalysisBarChart();
         hideLoader();
-      }).getTransactionData();
+      }, 0);
     } else {
       renderAnalysisBarChart();
     }
