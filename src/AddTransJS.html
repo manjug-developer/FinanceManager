@@ -3,9 +3,10 @@
   let editingTransactionId = null; // Track if we are editing
 
   function openAddTrans(existingData = null) {
+    console.log("Opening Add Transaction Modal", categoryMap, accountMap);
     const categories = typeof categoryMap !== 'undefined' ? categoryMap : {};
     const accounts = typeof accountMap !== 'undefined' ? accountMap : {};
-
+    console.log("existingData:", existingData);
     if (existingData) {
       // EDIT MODE
       editingTransactionId = existingData[6]; // ID column
@@ -82,27 +83,52 @@
     }
   }
 
+  function updateAtAccIcon() {
+    const accId = document.getElementById('atAccount').value;
+    const accounts = typeof accountMap !== 'undefined' ? accountMap : {};
+    if (accounts[accId]) {
+      document.getElementById('atAccIcon').innerText = accounts[accId].icon || 'account';
+    }
+  }
+
   function submitNewTransaction() {
     const amount = document.getElementById('atAmount').value;
     if (!amount || amount <= 0) return alert("Enter valid amount");
-
     const formData = {
       id: editingTransactionId, // Will be null for new, ID for edit
       type: currentAtType,
       amount: amount,
-      date: document.getElementById('atDate').value,
+      date: new Date((document.getElementById('atDate').value) + 'T00:00:00')
+              .toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              })
+              .replace(/ /g, '-'),
       notes: document.getElementById('atNotes').value,
       categoryId: document.getElementById('atCategory').value,
       accountId: document.getElementById('atAccount').value
     };
-
+    console.log("Submitting Transaction", formData);
     // If editingTransactionId exists, call update, else call save
-    const serverFunction = editingTransactionId ? 'updateTransaction' : 'saveNewTransaction';
+    if(!editingTransactionId){
+      showLoader();
+      google.script.run.withSuccessHandler(() => {
+        closeAddTrans();
+        hideLoader();
+      }).addGenericRow('Transactions',[formData.date,formData.type,formData.amount,formData.accountId,formData.categoryId,formData.notes]);
+    } else if(editingTransactionId){
+      showLoader();
+      google.script.run.withSuccessHandler(() => {
+        closeAddTrans();
+        hideLoader();
+      }).updateGenericRow('Transactions',editingTransactionId,[formData.date,formData.type,formData.amount,formData.accountId,formData.categoryId,formData.notes]);
+    }
 
-    google.script.run.withSuccessHandler(() => {
-      closeAddTrans();
-      if (typeof loadTransactions === 'function') loadTransactions();
-      if (typeof loadHome === 'function') loadHome();
-    })[serverFunction](editingTransactionId ? editingTransactionId : formData, editingTransactionId ? [formData.date, formData.notes, formData.type, formData.amount, formData.accountId, formData.categoryId] : formData);
+    // google.script.run.withSuccessHandler(() => {
+    //   closeAddTrans();
+    //   if (typeof loadTransactions === 'function') loadTransactions();
+    //   if (typeof loadHome === 'function') loadHome();
+    // })[serverFunction](editingTransactionId ? editingTransactionId : formData, editingTransactionId ? [formData.date, formData.notes, formData.type, formData.amount, formData.accountId, formData.categoryId] : formData);
   }
 </script>

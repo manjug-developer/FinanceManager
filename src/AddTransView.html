@@ -14,9 +14,9 @@
       <div id="btnTypeInc" class="type-pill" data-type="Income" onclick="setTransType('Income')">
         <span class="material-icons">south_west</span> Income
       </div>
-      <div id="btnTypeTrf" class="type-pill" data-type="Transfer" onclick="setTransType('Transfer')">
+      <!-- <div id="btnTypeTrf" class="type-pill" data-type="Transfer" onclick="setTransType('Transfer')">
         <span class="material-icons">sync_alt</span> Transfer
-      </div>
+      </div> -->
     </div>
 
     <div class="input-card mb-3">
@@ -63,10 +63,10 @@
 
     <div class="selector-card mb-4" onclick="document.getElementById('atAccount').focus()">
        <div class="d-flex align-items-center w-100">
-         <div class="icon-circle me-3" style="background: #6366f1;"><span class="material-icons">account_balance_wallet</span></div>
+         <div class="icon-circle me-3" style="background: #6366f1;"><span class="material-icons" id="atAccIcon">account_balance_wallet</span></div>
          <div class="flex-grow-1">
            <small class="card-label d-block">Account</small>
-           <select id="atAccount" class="custom-select"></select>
+           <select id="atAccount" class="custom-select" onchange="updateAtAccIcon()"></select>
          </div>
          <span class="material-icons opacity-25">expand_more</span>
        </div>

@@ -24,15 +24,17 @@
         row[2],    // Type
         row[3],    // Amount
         row[4],    // Account
-        row[5]     // Category
+        row[5],     // Category
+        row[0]     // ID
       ];
     });
 
     const formattedCategories = window.MasterData.categories.slice(1).reduce((acc, row) => {
         const [id, name, type, icon] = row;
         acc[id] = { 
-            name: name, 
-            icon: icon 
+            name: name,
+            type: type,
+            icon: icon
         };
         return acc;
     }, {});
@@ -40,7 +42,8 @@
     const formattedAccounts = window.MasterData.accounts.slice(1).reduce((acc, row) => {
         // row[0] is AccountID, row[1] is AccountName
         acc[row[0]] = { 
-            name: row[1] 
+            name: row[1],
+            icon: row[2]
         };
         
         return acc;
