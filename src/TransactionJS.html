@@ -56,64 +56,6 @@
     };
   }
 
-  function openTransEditModal(row) {
-  // Fill hidden ID (Assuming row[6] is your unique ID)
-  document.getElementById('editTransId').value = row[6];
-  
-  // Format date for input field (YYYY-MM-DD)
-  const d = new Date(row[0]);
-  const dateStr = d.toISOString().split('T')[0];
-  document.getElementById('editTransDate').value = dateStr;
-  
-  document.getElementById('editTransDesc').value = row[1];
-  document.getElementById('editTransAmt').value = row[3];
-  
-  // Populate Selects
-  const accSelect = document.getElementById('editTransAcc');
-  const catSelect = document.getElementById('editTransCat');
-  
-  accSelect.innerHTML = Object.keys(accountMap).map(id => 
-    `<option value="${id}" ${id == row[4] ? 'selected' : ''}>${accountMap[id].name}</option>`).join('');
-    
-  catSelect.innerHTML = Object.keys(categoryMap).map(id => 
-    `<option value="${id}" ${id == row[5] ? 'selected' : ''}>${categoryMap[id].name}</option>`).join('');
-
-  document.getElementById('transEditOverlay').classList.add('active');
-  document.getElementById('transEditModal').classList.add('active');
-}
-
-function closeTransEditModal() {
-  document.getElementById('transEditOverlay').classList.remove('active');
-  document.getElementById('transEditModal').classList.remove('active');
-}
-
-function processTransUpdate() {
-  const id = document.getElementById('editTransId').value;
-  const updatedRow = [
-    document.getElementById('editTransDate').value,
-    document.getElementById('editTransDesc').value,
-    allTransactions.find(t => t[6] === id)[2], // Keep original Type (Inc/Exp)
-    parseFloat(document.getElementById('editTransAmt').value),
-    document.getElementById('editTransAcc').value,
-    document.getElementById('editTransCat').value
-  ];
-
-  google.script.run.withSuccessHandler(() => {
-    closeTransEditModal();
-    loadTransactions(); // Refresh the list
-  }).updateTransaction(id, updatedRow);
-}
-
-function confirmDeleteTransaction() {
-  const id = document.getElementById('editTransId').value;
-  if (confirm("Are you sure you want to delete this transaction?")) {
-    google.script.run.withSuccessHandler(() => {
-      closeTransEditModal();
-      loadTransactions();
-    }).deleteTransaction(id);
-  }
-}
-
   /** 1. Data Loading */
   function loadTransactions() {
     const timeline = document.getElementById('transactionTimeline');
