@@ -1,30 +1,3 @@
-function saveNewTransaction(formData) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName('Transactions');
-    
-    // Generate a unique ID (Timestamp + Random string)
-    const txId = 'TX' + new Date().getTime() + Math.random().toString(36).substr(2, 4);
-    
-    // Prepare the row data
-    // Format: [Date, Description, Type, Amount, AccountID, CategoryID, ID]
-    const newRow = [
-      formData.date,
-      formData.notes || "",
-      formData.type,
-      parseFloat(formData.amount),
-      formData.accountId,
-      formData.categoryId,
-      txId
-    ];
-    
-    sheet.appendRow(newRow);
-    return { success: true };
-  } catch (e) {
-    return { success: false, error: e.toString() };
-  }
-}
-
 function updateTransaction(id, updatedRow) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName('Transactions');

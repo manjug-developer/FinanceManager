@@ -1,45 +1,4 @@
 /**
- * Transaction Backend - Fetches and Joins real data from Spreadsheet
- */
-function getTransactionData() {
-  const DUMMY_TRANSACTIONS = [];
-  getSheetDataAsObjects('Transactions').forEach(trans => {
-    DUMMY_TRANSACTIONS.push(
-      [formatDate(trans.Date),trans.Notes,trans.Type,trans.Amount,trans.Account,trans.Category]
-    );
-  })
-  //console.log(DUMMY_TRANSACTIONS);
-
-  const sheetName1 = "Categories"; // Change this to your actual sheet name
-  const primaryKey1 = "CategoryID";
-  
-  // Define which column goes to which property name
-  const mappingSchema1 = {
-    'CategoryName': 'name',
-    'Icon': 'icon'
-  };
-
-  const MOCK_CATS = getMappedSheetData(sheetName1, primaryKey1, mappingSchema1);
-  //console.log(MOCK_CATS);
-
-  const sheetName2 = "Accounts"; // Change this to your actual sheet name
-  const primaryKey2 = "AccountID";
-  
-  // Define which column goes to which property name
-  const mappingSchema2 = {
-    'AccountName': 'name'
-  };
-
-  const MOCK_ACCS = getMappedSheetData(sheetName2, primaryKey2, mappingSchema2);
-  //console.log(MOCK_ACCS);
-  return{
-    transactions : DUMMY_TRANSACTIONS,
-    categories : MOCK_CATS,
-    accounts : MOCK_ACCS
-    };
-}
-
-/**
  * Updates an existing transaction or deletes it
  */
 function updateTransaction(id, updatedRow) {

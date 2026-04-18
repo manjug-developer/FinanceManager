@@ -119,18 +119,6 @@ function confirmDeleteTransaction() {
     const timeline = document.getElementById('transactionTimeline');
     timeline.innerHTML = '<div class="text-center mt-5 opacity-50">Loading transactions...</div>';
     showLoader();
-    // console.log(constructTransactionData());
-    // google.script.run
-    //   .withSuccessHandler(data => {
-    //     hideLoader();
-    //     allTransactions = data.transactions;
-    //     categoryMap = data.categories;
-    //     accountMap = data.accounts;
-    //     applyDateFilter('All time'); // Initial render
-    //     setupFilterUI();
-    //   }).getTransactionData();
-
-
     setTimeout(() => {
       hideLoader();
       const data = constructTransactionData();

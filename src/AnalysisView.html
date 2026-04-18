@@ -99,15 +99,6 @@
     // Check if view is active
     if (document.getElementById('analysisView').style.display === 'none') return;
     showLoader();
-    // google.script.run.withSuccessHandler(data => {
-    //   // These are global variables likely defined in GlobalJS or TransactionJS
-    //   allTransactions = data.transactions;
-    //   categoryMap = data.categories;
-    //   accountMap = data.accounts;
-    //   refreshAnalysisUI();
-    //   hideLoader();
-    // }).getTransactionData();
-
     setTimeout(() => {
       const data = constructTransactionData();
       allTransactions = data.transactions;

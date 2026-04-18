@@ -44,13 +44,6 @@
 
   function loadCategories() {
     showLoader();
-    // google.script.run.withSuccessHandler(data => {
-    //   currentCategoriesData = data;
-    //   renderCategoryList();
-    //   hideLoader();
-    // }).getCategoryData();
-    
-
     currentCategoriesData = arrayToObjects([['id', 'name', 'type', 'icon']].concat(window.MasterData.categories.slice(1))); // Skip header row
     console.log("Loading categories from MasterData", currentCategoriesData);
     renderCategoryList();
