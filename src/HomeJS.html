@@ -106,13 +106,14 @@ function constructHomeData(transactions, categories, accounts) {
         id: 'centerText',
         afterDraw: (chart) => {
           const { ctx, width, height } = chart;
-          const textSec = getComputedStyle(document.body).getPropertyValue('--text-sec');
-          const textMain = getComputedStyle(document.body).getPropertyValue('--text');
+          const style = getComputedStyle(document.body);
+          const textSec  = style.getPropertyValue('--text-sec').trim();
+          const textMain = style.getPropertyValue('--text').trim();
           ctx.restore();
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillStyle = textSec; ctx.font = '14px Segoe UI';
+          ctx.fillStyle = textSec || '#888'; ctx.font = '14px Segoe UI';
           ctx.fillText(title, width / 2, height / 2 - 12);
-          ctx.fillStyle = textMain; ctx.font = 'bold 18px Segoe UI';
+          ctx.fillStyle = textMain || '#000'; ctx.font = 'bold 18px Segoe UI';
           ctx.fillText(formatINR(total), width / 2, height / 2 + 12);
           ctx.save();
         }
@@ -136,7 +137,10 @@ function constructHomeData(transactions, categories, accounts) {
         plugins: {
           legend: { display: false },
           datalabels: {
-            color: '#fff', font: { size: 10, weight: 'bold' }, align: 'end', anchor: 'end', offset: 10,
+            color: function() {
+              return getComputedStyle(document.body).getPropertyValue('--text').trim() || '#000';
+            },
+            font: { size: 10, weight: 'bold' }, align: 'end', anchor: 'end', offset: 10,
             formatter: (v, c) => `${c.chart.data.labels[c.dataIndex]}\n(${((v/total)*100).toFixed(0)}%)`
           }
         }
