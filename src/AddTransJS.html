@@ -124,11 +124,5 @@
         hideLoader();
       }).updateGenericRow('Transactions',editingTransactionId,["'" + formData.date,formData.type,formData.amount,formData.accountId,formData.categoryId,formData.notes]);
     }
-
-    // google.script.run.withSuccessHandler(() => {
-    //   closeAddTrans();
-    //   if (typeof loadTransactions === 'function') loadTransactions();
-    //   if (typeof loadHome === 'function') loadHome();
-    // })[serverFunction](editingTransactionId ? editingTransactionId : formData, editingTransactionId ? [formData.date, formData.notes, formData.type, formData.amount, formData.accountId, formData.categoryId] : formData);
   }
 </script>
