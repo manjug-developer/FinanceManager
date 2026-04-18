@@ -1,15 +1,15 @@
 <style>
   .modal-header {
-    background: #161a22;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
     z-index: 100;
   }
 
   .type-switcher-group {
-    background: #1c1f26;
-    border: 1px solid #2d323e;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
     border-radius: 14px;
     display: flex;
     padding: 5px;
@@ -20,7 +20,7 @@
     padding: 10px;
     border-radius: 10px;
     font-size: 13px;
-    color: #888;
+    color: var(--text-sec);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -28,42 +28,30 @@
     cursor: pointer;
     transition: 0.2s;
   }
-  
-  /* Active States */
-  .type-pill.active[data-type="Expense"] { background: #452727; color: #ff5252; }
-  .type-pill.active[data-type="Income"] { background: #1b3324; color: #28a745; }
-  .type-pill.active[data-type="Transfer"] { background: #1e2a3d; color: #3b82f6; }
 
-  .input-card, .selector-card {
-    background: #1c1f26;
-    border: 1px solid #2d323e;
+  .type-pill.active[data-type="Expense"]  { background: rgba(239,68,68,0.15);   color: #ff5252; }
+  .type-pill.active[data-type="Income"]   { background: rgba(40,167,69,0.15);   color: #28a745; }
+  .type-pill.active[data-type="Transfer"] { background: rgba(59,130,246,0.15);  color: #3b82f6; }
+
+  .input-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
     border-radius: 20px;
     padding: 18px;
   }
-  
-  .divider { height: 1px; background: rgba(255,255,255,0.05); width: 100%; }
-  
+
+  .divider { height: 1px; background: var(--border); width: 100%; }
+
   .invisible-input {
     background: transparent;
     border: none;
-    color: white;
+    color: var(--text);
     width: 100%;
     outline: none;
     font-size: 28px;
     font-weight: 700;
   }
   .small-text { font-size: 15px; font-weight: normal; }
-
-  .custom-select {
-    background: transparent;
-    border: none;
-    color: white;
-    width: 100%;
-    outline: none;
-    font-weight: 600;
-    font-size: 16px;
-    appearance: none;
-  }
 
   .icon-circle {
     width: 44px; height: 44px; border-radius: 12px;
@@ -80,5 +68,107 @@
     border: none;
     font-size: 16px;
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  }
+
+  /* Full height modal uses CSS vars */
+  #addTransModal.full-height-modal {
+    background: var(--bg);
+  }
+
+  /* Selector trigger card */
+  .at-selector-trigger {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    margin-bottom: 12px;
+  }
+  .at-selector-trigger:active { border-color: var(--accent); }
+
+  .at-selector-trigger .trigger-icon-circle {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    margin-right: 14px;
+    flex-shrink: 0;
+  }
+
+  .at-selector-trigger .trigger-texts {
+    flex-grow: 1;
+    overflow: hidden;
+  }
+  .at-selector-trigger .trigger-label {
+    font-size: 10px;
+    color: var(--text-sec);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .at-selector-trigger .trigger-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .at-selector-trigger .material-icons.chevron {
+    font-size: 20px;
+    color: var(--text-sec);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  /* Picker sheet option cards */
+  .at-picker-option {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: 16px;
+    margin-bottom: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .at-picker-option.selected {
+    border-color: var(--accent);
+    background: rgba(59,130,246,0.08);
+  }
+  .at-picker-option .opt-icon {
+    width: 40px; height: 40px; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 14px;
+    flex-shrink: 0;
+    font-size: 20px;
+  }
+  .at-picker-option .opt-name {
+    flex-grow: 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .at-picker-option .opt-check {
+    font-size: 20px;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .at-picker-option.selected .opt-check { opacity: 1; }
+
+  /* Ensure pickers render above the AddTrans modal */
+  #atCatPickerOverlay,
+  #atAccPickerOverlay {
+    z-index: 4000;
+  }
+  #atCatPickerSheet,
+  #atAccPickerSheet {
+    z-index: 4001;
   }
 </style>
