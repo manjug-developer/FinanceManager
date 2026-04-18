@@ -173,26 +173,44 @@
   function renderAnalysisTrendChart() {
     const data = getFilteredAnData();
     const selCat = document.getElementById('analysisCatFilter').value;
+    const selectedYear = document.getElementById('analysisYearPicker').value;
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const monthlyMap = {};
+    
+    const isAllYears = selectedYear === 'All';
+    const groupMap = {};
     const catNames = new Set();
 
+    // Collect all unique years from data for x-axis labels when 'All Years'
+    const yearSet = new Set();
+    data.forEach(t => {
+      if (t[2] === anTrendType) {
+        yearSet.add(new Date(t[0]).getFullYear().toString());
+      }
+    });
+    const years = Array.from(yearSet).sort();
+
+    // Group data by year or month depending on filter
     data.forEach(t => {
       const d = new Date(t[0]);
-      const mLabel = months[d.getMonth()];
       const cId = t[5];
-      
+      const label = isAllYears
+        ? d.getFullYear().toString()
+        : months[d.getMonth()];
+
       if (t[2] === anTrendType && (selCat === 'All' || selCat === cId)) {
-        if (!monthlyMap[mLabel]) monthlyMap[mLabel] = {};
+        if (!groupMap[label]) groupMap[label] = {};
         const cName = categoryMap[cId]?.name || 'Unknown';
-        monthlyMap[mLabel][cName] = (monthlyMap[mLabel][cName] || 0) + parseFloat(t[3]);
+        groupMap[label][cName] = (groupMap[label][cName] || 0) + parseFloat(t[3]);
         catNames.add(cName);
       }
     });
 
+    // Use years or months as x-axis labels
+    const xLabels = isAllYears ? years : months;
+
     const datasets = Array.from(catNames).map((name, i) => ({
       label: name,
-      data: months.map(m => monthlyMap[m]?.[name] || 0),
+      data: xLabels.map(l => groupMap[l]?.[name] || 0),
       borderColor: `hsl(${(i * 60) % 360}, 65%, 55%)`,
       tension: 0.3,
       borderWidth: 2,
@@ -204,7 +222,7 @@
     
     anTrendChart = new Chart(ctx, {
       type: 'line',
-      data: { labels: months, datasets: datasets },
+      data: { labels: xLabels, datasets: datasets },
       options: anChartOptions
     });
   }
