@@ -71,6 +71,11 @@
     if(viewName === 'transaction') {
       navItems[2].classList.add('active');
       loadTransactions(); // Call the fetcher
+      // Show Add button only here
+      document.getElementById('globalAddBtn').style.display = 'flex';
+    }else {
+      // Hide for all other views
+      document.getElementById('globalAddBtn').style.display = 'none';
     }
     if(viewName === 'category') {
       navItems[3].classList.add('active');
