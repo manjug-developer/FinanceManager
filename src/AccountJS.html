@@ -132,17 +132,25 @@
     if(accModalTitle === 'New Account') {
       console.log("Adding new account with data:", [data.name,data.icon]);
       google.script.run.withSuccessHandler(() => {
-        showAccList();
-        renderManageList();
-        hideLoader();
+        google.script.run.withSuccessHandler(data => {
+          window.MasterData = data;
+          loadHomeData();           // rebuilds currentHomeData + re-renders home
+          showAccList();
+          renderManageList();
+          hideLoader();
+        }).loadMasterData();
       }).addGenericRow('Accounts', [data.name,data.icon]);
     } else if(accModalTitle === 'Edit Account') {
         const accID = document.getElementById('accFormView')._storedValue;
         console.log("Updating existing account with data:", [accID, data.name,data.icon]);
         google.script.run.withSuccessHandler(() => {
-          showAccList();
-          renderManageList();
-          hideLoader();
+          google.script.run.withSuccessHandler(data => {
+            window.MasterData = data;
+            loadHomeData();
+            showAccList();
+            renderManageList();
+            hideLoader();
+          }).loadMasterData();
         }).updateGenericRow('Accounts',accID, [data.name,data.icon]);
       }
   }
@@ -152,9 +160,13 @@
     if (!confirm("Delete this account?")) return;
     const accID = document.getElementById('accFormView')._storedValue;
     google.script.run.withSuccessHandler(() => {
-      showAccList();
-      renderManageList();
-      hideLoader();
+      google.script.run.withSuccessHandler(data => {
+        window.MasterData = data;
+        loadHomeData();
+        showAccList();
+        renderManageList();
+        hideLoader();
+      }).loadMasterData();
     }).deleteGenericRow('Accounts',accID);
   }
 </script>
