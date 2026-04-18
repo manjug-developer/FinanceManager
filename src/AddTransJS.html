@@ -116,13 +116,13 @@
       google.script.run.withSuccessHandler(() => {
         closeAddTrans();
         hideLoader();
-      }).addGenericRow('Transactions',[formData.date,formData.type,formData.amount,formData.accountId,formData.categoryId,formData.notes]);
+      }).addGenericRow('Transactions',["'" + formData.date,formData.type,formData.amount,formData.accountId,formData.categoryId,formData.notes]);
     } else if(editingTransactionId){
       showLoader();
       google.script.run.withSuccessHandler(() => {
         closeAddTrans();
         hideLoader();
-      }).updateGenericRow('Transactions',editingTransactionId,[formData.date,formData.type,formData.amount,formData.accountId,formData.categoryId,formData.notes]);
+      }).updateGenericRow('Transactions',editingTransactionId,["'" + formData.date,formData.type,formData.amount,formData.accountId,formData.categoryId,formData.notes]);
     }
 
     // google.script.run.withSuccessHandler(() => {
