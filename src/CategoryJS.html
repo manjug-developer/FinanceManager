@@ -123,9 +123,13 @@
     };
     showLoader();
     google.script.run.withSuccessHandler(() => {
-      closeCategoryModal();
-      loadCategories();
-      hideLoader();
+      google.script.run.withSuccessHandler(data => {
+        window.MasterData = data;
+        loadHomeData();
+        closeCategoryModal();
+        loadCategories();
+        hideLoader();
+      }).loadMasterData();
     }).saveCategory(catObj);
   }
 
@@ -134,9 +138,13 @@
     if (confirm('Delete this category? Transactions using this category may be affected.')) {
       showLoader();
       google.script.run.withSuccessHandler(() => {
-        closeCategoryModal();
-        loadCategories();
-        hideLoader();
+         google.script.run.withSuccessHandler(data => {
+          window.MasterData = data;
+          loadHomeData();
+          closeCategoryModal();
+          loadCategories();
+          hideLoader();
+        }).loadMasterData();
       }).deleteCategory(id);
     }
   }

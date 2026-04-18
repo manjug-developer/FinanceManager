@@ -1,24 +1,24 @@
 <script>
   let currentAtType = 'Expense';
-  let editingTransactionId = null; // Track if we are editing
+  let editingTransactionId = null;
 
   function openAddTrans(existingData = null) {
     console.log("Opening Add Transaction Modal", categoryMap, accountMap);
     const categories = typeof categoryMap !== 'undefined' ? categoryMap : {};
     const accounts = typeof accountMap !== 'undefined' ? accountMap : {};
     console.log("existingData:", existingData);
+
     if (existingData) {
       // EDIT MODE
-      editingTransactionId = existingData[6]; // ID column
+      editingTransactionId = existingData[6];
       document.getElementById('atAmount').value = existingData[3];
       document.getElementById('atNotes').value = existingData[1];
       document.getElementById('atDate').value = new Date(existingData[0]).toISOString().split('T')[0];
       
-      // Update UI Header
       document.querySelector('#addTransModal h5').innerText = "Edit Transaction";
-      setTransType(existingData[2]); 
-      
-      // Set dropdown values after they populate
+      document.getElementById('atDeleteBtn').style.display = 'block';
+      setTransType(existingData[2]);
+
       setTimeout(() => {
         document.getElementById('atCategory').value = existingData[5];
         document.getElementById('atAccount').value = existingData[4];
@@ -33,9 +33,10 @@
       document.getElementById('atDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('atTime').value = new Date().toTimeString().slice(0,5);
       document.querySelector('#addTransModal h5').innerText = "New Transaction";
+      document.getElementById('atDeleteBtn').style.display = 'none';
       setTransType('Expense');
     }
-    
+
     document.getElementById('addTransOverlay').classList.add('active');
     document.getElementById('addTransModal').classList.add('active');
   }
@@ -95,7 +96,7 @@
     const amount = document.getElementById('atAmount').value;
     if (!amount || amount <= 0) return alert("Enter valid amount");
     const formData = {
-      id: editingTransactionId, // Will be null for new, ID for edit
+      id: editingTransactionId,
       type: currentAtType,
       amount: amount,
       date: new Date((document.getElementById('atDate').value) + 'T00:00:00')
@@ -109,20 +110,44 @@
       categoryId: document.getElementById('atCategory').value,
       accountId: document.getElementById('atAccount').value
     };
-    console.log("Submitting Transaction", formData);
-    // If editingTransactionId exists, call update, else call save
-    if(!editingTransactionId){
+
+    if (!editingTransactionId) {
       showLoader();
       google.script.run.withSuccessHandler(() => {
-        closeAddTrans();
-        hideLoader();
-      }).addGenericRow('Transactions',["'" + formData.date,formData.type,formData.amount,formData.accountId,formData.categoryId,formData.notes]);
-    } else if(editingTransactionId){
+        google.script.run.withSuccessHandler(data => {
+          window.MasterData = data;
+          closeAddTrans();
+          loadTransactions();
+          loadHomeData();
+          hideLoader();
+        }).loadMasterData();
+      }).addGenericRow('Transactions', ["'" + formData.date, formData.type, formData.amount, formData.accountId, formData.categoryId, formData.notes]);
+    } else {
       showLoader();
       google.script.run.withSuccessHandler(() => {
-        closeAddTrans();
-        hideLoader();
-      }).updateGenericRow('Transactions',editingTransactionId,["'" + formData.date,formData.type,formData.amount,formData.accountId,formData.categoryId,formData.notes]);
+        google.script.run.withSuccessHandler(data => {
+          window.MasterData = data;
+          closeAddTrans();
+          loadTransactions();
+          loadHomeData();
+          hideLoader();
+        }).loadMasterData();
+      }).updateGenericRow('Transactions', editingTransactionId, ["'" + formData.date, formData.type, formData.amount, formData.accountId, formData.categoryId, formData.notes]);
     }
+  }
+
+  function deleteCurrentTransaction() {
+    if (!editingTransactionId) return;
+    if (!confirm("Delete this transaction?")) return;
+    showLoader();
+    google.script.run.withSuccessHandler(() => {
+      google.script.run.withSuccessHandler(data => {
+        window.MasterData = data;
+        closeAddTrans();
+        loadTransactions();
+        loadHomeData();
+        hideLoader();
+      }).loadMasterData();
+    }).deleteGenericRow('Transactions', editingTransactionId);
   }
 </script>

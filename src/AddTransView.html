@@ -1,8 +1,11 @@
 <div id="addTransOverlay" class="modal-overlay" onclick="closeAddTrans()"></div>
 <div id="addTransModal" class="full-height-modal">
-  <div class="modal-header d-flex align-items-center p-3">
-    <span class="material-icons me-3" onclick="closeAddTrans()" style="cursor:pointer; color: var(--accent);">close</span>
-    <h5 class="m-0 fw-bold">New Transaction</h5>
+  <div class="modal-header d-flex align-items-center justify-content-between p-3">
+    <div class="d-flex align-items-center">
+      <span class="material-icons me-3" onclick="closeAddTrans()" style="cursor:pointer; color: var(--accent);">close</span>
+      <h5 class="m-0 fw-bold">New Transaction</h5>
+    </div>
+    <span id="atDeleteBtn" class="material-icons text-danger" style="display:none; cursor:pointer" onclick="deleteCurrentTransaction()">delete</span>
   </div>
 
   <div class="modal-body p-3">
@@ -14,9 +17,6 @@
       <div id="btnTypeInc" class="type-pill" data-type="Income" onclick="setTransType('Income')">
         <span class="material-icons">south_west</span> Income
       </div>
-      <!-- <div id="btnTypeTrf" class="type-pill" data-type="Transfer" onclick="setTransType('Transfer')">
-        <span class="material-icons">sync_alt</span> Transfer
-      </div> -->
     </div>
 
     <div class="input-card mb-3">
