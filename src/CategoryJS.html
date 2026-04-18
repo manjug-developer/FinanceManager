@@ -128,19 +128,22 @@
       type: currentViewType, 
       icon: selectedIcon
     };
-
+    showLoader();
     google.script.run.withSuccessHandler(() => {
       closeCategoryModal();
       loadCategories();
+      hideLoader();
     }).saveCategory(catObj);
   }
 
   function confirmDeleteCat() {
     const id = document.getElementById('editCatId').value;
     if (confirm('Delete this category? Transactions using this category may be affected.')) {
+      showLoader();
       google.script.run.withSuccessHandler(() => {
         closeCategoryModal();
         loadCategories();
+        hideLoader();
       }).deleteCategory(id);
     }
   }

@@ -134,6 +134,7 @@ function confirmDeleteTransaction() {
     setTimeout(() => {
       hideLoader();
       const data = constructTransactionData();
+      console.log("Constructed Transaction Data:", data);
       allTransactions = data.transactions;
       categoryMap = data.categories;
       accountMap = data.accounts;
@@ -215,6 +216,7 @@ function confirmDeleteTransaction() {
   }
 
   function renderTimeline(data) {
+    console.log("Rendering timeline with data:", data);
     const container = document.getElementById('transactionTimeline');
     container.innerHTML = '';
 
@@ -225,16 +227,31 @@ function confirmDeleteTransaction() {
 
     // Grouping by Date
     const groups = data.reduce((acc, row) => {
-      const d = new Date(row[0]).toISOString().split('T')[0];
+      // FIX: Instead of new Date(row[0]).toISOString(), 
+      // directly handle the date string or use UTC methods
+      const rawDate = new Date(row[0]);
+      
+      // Option A: Use local date parts to avoid the ISO shift
+      const d = rawDate.getFullYear() + '-' + 
+                String(rawDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(rawDate.getDate()).padStart(2, '0');
+
       if (!acc[d]) acc[d] = { items: [], total: 0 };
       acc[d].items.push(row);
-      acc[d].total += (row[2] === 'Income' ? row[3] : -row[3]);
+      
+      // Calculate total
+      const amount = parseFloat(row[3]) || 0;
+      acc[d].total += (row[2] === 'Income' ? amount : -amount);
+      
       return acc;
     }, {});
+    
+    console.log("Grouped Data:", groups);
 
     Object.keys(groups).sort((a,b) => new Date(b) - new Date(a)).forEach(dateKey => {
       const group = groups[dateKey];
       const d = new Date(dateKey);
+      console.log("Rendering group for date:", dateKey, group, d);
       
       let html = `
         <div class="day-group">
