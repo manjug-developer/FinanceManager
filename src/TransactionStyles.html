@@ -1,23 +1,219 @@
 <style>
-  /* Timeline Elements */
-  .day-group-header { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 25px; margin-bottom: 12px; }
-  .day-number { font-size: 32px; font-weight: 800; line-height: 0.9; margin-right: 12px; color: var(--text); }
-  .day-meta { font-size: 11px; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
-  .day-total { font-weight: 700; font-size: 15px; }
+  /* ── full-width bleed: escape the global app-container padding ───── */
+  #transactionView.txn-full-bleed {
+    margin-left: -15px;
+    margin-right: -15px;
+  }
 
-  /* Transaction Cards */
-  .trans-card { background: var(--card-bg); border-radius: 18px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; border: 1px solid var(--border); }
-  .trans-icon-box { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; margin-right: 14px; border: 1px solid var(--border); }
-  .trans-info { flex-grow: 1; overflow: hidden; }
-  .trans-title { font-weight: 600; font-size: 14.5px; margin-bottom: 1px; color: var(--text); }
-  .trans-sub { font-size: 11px; color: var(--text-sec); display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .trans-amt-box { text-align: right; margin-left: 10px; min-width: 80px; }
-  
-  .amt-val { font-weight: 800; font-size: 15px; }
-  .amt-income { color: #28a745; }
+  /* ── top bar ─────────────────────────────────────────────────────── */
+  .txn-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .txn-top-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .txn-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .txn-action-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-sec);
+    transition: all 0.15s;
+  }
+  .txn-action-btn:active { opacity: 0.7; transform: scale(0.93); }
+  .txn-action-btn .material-icons { font-size: 20px; }
+
+  .txn-filter-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 1.5px solid var(--bg);
+  }
+
+  /* ── mini ratio bar ──────────────────────────────────────────────── */
+  .mini-bar {
+    display: flex;
+    height: 3px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 5px;
+    width: 100%;
+  }
+  .mini-bar-inc { background: #10b981; }
+  .mini-bar-exp { background: #ef4444; }
+
+  /* ── savings badge ───────────────────────────────────────────────── */
+  .savings-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 20px;
+    letter-spacing: 0.1px;
+  }
+
+  /* ── year group ──────────────────────────────────────────────────── */
+  .year-group {
+    margin-bottom: 10px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+  }
+  .year-header {
+    display: flex;
+    align-items: center;
+    padding: 15px 16px;
+    cursor: pointer;
+    gap: 10px;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .year-header:active { background: rgba(255,255,255,0.03); }
+  .year-left { display: flex; flex-direction: column; flex-shrink: 0; }
+  .year-label { font-size: 24px; font-weight: 800; color: var(--text); line-height: 1; }
+  .year-count { font-size: 10px; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+  .year-right { flex-grow: 1; text-align: right; min-width: 0; }
+  .year-io {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .yr-inc { color: #10b981; display: flex; align-items: center; gap: 2px; }
+  .yr-exp { color: #ef4444; display: flex; align-items: center; gap: 2px; }
+  .year-net { font-size: 15px; font-weight: 800; }
+  .year-chevron {
+    font-size: 20px;
+    color: var(--text-sec);
+    flex-shrink: 0;
+    transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .year-body { padding: 0 8px 8px; }
+
+  /* ── month group ─────────────────────────────────────────────────── */
+  .month-group {
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .month-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    cursor: pointer;
+    gap: 10px;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .month-header:active { background: rgba(255,255,255,0.03); }
+  .month-left { display: flex; flex-direction: column; flex-shrink: 0; }
+  .month-label { font-size: 14px; font-weight: 700; color: var(--text); }
+  .month-count { font-size: 10px; color: var(--text-sec); margin-top: 1px; }
+  .month-right { flex-grow: 1; text-align: right; min-width: 0; }
+  .month-io {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+  .mo-inc { color: #10b981; display: flex; align-items: center; gap: 2px; }
+  .mo-exp { color: #ef4444; display: flex; align-items: center; gap: 2px; }
+  .month-net-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .month-net { font-size: 13px; font-weight: 800; }
+  .month-chevron {
+    font-size: 18px;
+    color: var(--text-sec);
+    flex-shrink: 0;
+    transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .month-body { padding: 0 6px 6px; }
+
+  /* ── transaction cards ───────────────────────────────────────────── */
+  .trans-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 11px 13px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .trans-card:active { background: rgba(255,255,255,0.04); }
+  .trans-day-badge {
+    flex-shrink: 0;
+    width: 30px;
+    text-align: center;
+    margin-right: 10px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .trans-day-badge span {
+    display: block;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-sec);
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+  }
+  .trans-icon-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 11px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .trans-info    { flex-grow: 1; overflow: hidden; }
+  .trans-title   { font-weight: 600; font-size: 13.5px; margin-bottom: 2px; color: var(--text); }
+  .trans-sub     { font-size: 11px; color: var(--text-sec); display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .trans-amt-box { text-align: right; margin-left: 8px; min-width: 72px; flex-shrink: 0; }
+  .amt-val     { font-weight: 800; font-size: 13.5px; }
+  .amt-income  { color: #28a745; }
   .amt-expense { color: #ff5252; }
 
-  /* Chips */
+  /* ── filter chips ────────────────────────────────────────────────── */
   .chip { padding: 7px 15px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); font-size: 12px; cursor: pointer; color: var(--text-sec); transition: 0.2s; }
-  .chip.active { background: rgba(37, 99, 235, 0.2); border-color: var(--accent); color: white; }
+  .chip.active { background: rgba(37,99,235,0.2); border-color: var(--accent); color: white; }
 </style>
