@@ -1,5 +1,5 @@
 <script>
-  let masterCategories = [];
+  let currentCategoriesData = [];
   let currentViewType = 'Expense'; // Tracks the active tab
   let selectedIcon = 'category';
 
@@ -43,10 +43,12 @@
 ];
 
   function loadCategories() {
-    google.script.run.withSuccessHandler(data => {
-      masterCategories = data;
-      renderCategoryList();
-    }).getCategoryData();
+    showLoader();
+    currentCategoriesData = arrayToObjects([['id', 'name', 'type', 'icon']].concat(window.MasterData.categories.slice(1))); // Skip header row
+    console.log("Loading categories from MasterData", currentCategoriesData);
+    renderCategoryList();
+    hideLoader();
+
   }
 
   function switchCategoryView(type) {
@@ -58,7 +60,7 @@
 
   function renderCategoryList() {
     const container = document.getElementById('categoryListContainer');
-    const filtered = masterCategories.filter(c => c.type === currentViewType);
+    const filtered = currentCategoriesData.filter(c => c.type === currentViewType);
     
     if(filtered.length === 0) {
       container.innerHTML = `<div class="text-center opacity-25 mt-5">No ${currentViewType} categories found</div>`;
@@ -119,19 +121,30 @@
       type: currentViewType, 
       icon: selectedIcon
     };
-
+    showLoader();
     google.script.run.withSuccessHandler(() => {
-      closeCategoryModal();
-      loadCategories();
+      google.script.run.withSuccessHandler(data => {
+        window.MasterData = data;
+        loadHomeData();
+        closeCategoryModal();
+        loadCategories();
+        hideLoader();
+      }).loadMasterData();
     }).saveCategory(catObj);
   }
 
   function confirmDeleteCat() {
     const id = document.getElementById('editCatId').value;
     if (confirm('Delete this category? Transactions using this category may be affected.')) {
+      showLoader();
       google.script.run.withSuccessHandler(() => {
-        closeCategoryModal();
-        loadCategories();
+         google.script.run.withSuccessHandler(data => {
+          window.MasterData = data;
+          loadHomeData();
+          closeCategoryModal();
+          loadCategories();
+          hideLoader();
+        }).loadMasterData();
       }).deleteCategory(id);
     }
   }

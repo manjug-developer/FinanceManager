@@ -30,5 +30,65 @@
       </div>
       <span id="fsStatusIcon" class="material-icons" style="color: var(--text-sec)">check_box_outline_blank</span>
     </div>
+
+    <div class="settings-item" onclick="openAboutModal()">
+      <div class="settings-icon-wrapper">
+        <span class="material-icons" style="font-size: 20px;">info</span>
+      </div>
+      <div class="settings-content flex-grow-1">
+        <span class="settings-title">About App</span>
+        <small style="color: var(--text-sec)">Developer & version info</small>
+      </div>
+      <span class="material-icons" style="color: var(--text-sec)">chevron_right</span>
+    </div>
+  </div>
+</div>
+
+<div id="aboutOverlay" class="modal-overlay" onclick="closeAboutModal()"></div>
+
+<div id="aboutModal" class="theme-modal">
+  <h5 class="fw-bold mb-3">About This App</h5>
+
+  <div class="mt-3">
+    <div class="opacity-50 small">Version</div>
+    <div class="fw-bold">v1.0</div>
+  </div>
+
+  <div class="mt-4">
+    <div class="opacity-50 small mb-2">Powered By</div>
+    <div class="d-flex align-items-center mb-2">
+      <span class="material-icons me-2" style="font-size:18px; color:#4285F4">cloud</span>
+      <span class="small fw-bold">Google Apps Script</span>
+    </div>
+  </div>
+
+  <div class="mt-3">
+    <div class="opacity-50 small mb-2">Built With AI Assistance</div>
+    <div class="d-flex align-items-center mb-2">
+      <span class="material-icons me-2" style="font-size:18px; color:#4285F4">auto_awesome</span>
+      <div>
+        <div class="small fw-bold">Google Gemini</div>
+      </div>
+    </div>
+    <div class="d-flex align-items-center mb-2">
+      <span class="material-icons me-2" style="font-size:18px; color:#10a37f">auto_awesome</span>
+      <div>
+        <div class="small fw-bold">ChatGPT</div>
+      </div>
+    </div>
+    <div class="d-flex align-items-center mb-2">
+      <span class="material-icons me-2" style="font-size:18px; color:#c48b87">auto_awesome</span>
+      <div>
+        <div class="small fw-bold">Claude AI</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="opacity-10 my-3">
+
+  <div class="mt-3">
+    <div class="opacity-50 small">Developer</div>
+    <div class="fw-bold">Manju Gangadhar</div>
+    <div class="small">manjug.developer@gmail.com</div>
   </div>
 </div>

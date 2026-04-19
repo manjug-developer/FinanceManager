@@ -8,9 +8,27 @@
     { name: 'Dracula', color: '#282a36' }, { name: 'Rose Gold', color: '#1a1616' }
   ];
 
+  // Global show/hide logic
+  function showLoader() {
+    const loader = document.getElementById('global-loader');
+    if(loader) loader.style.display = 'block';
+  }
+
+  function hideLoader() {
+    const loader = document.getElementById('global-loader');
+    if(loader) loader.style.display = 'none';
+  }
+
+
   window.onload = () => {
+    showLoader();
     // 1. Load User Settings
-    google.script.run.withSuccessHandler(settings => {
+    google.script.run.withSuccessHandler(data => {
+
+      window.MasterData = data;
+      console.log("MasterData loaded globally:");
+
+      let settings = arrayToMap(data.userSettings);
       console.log("Settings applied:", settings);
       
       // Apply Theme to body immediately
@@ -24,18 +42,22 @@
       if (settings.FullScreen === "true") {
         if (typeof updateFSUI === 'function') updateFSUI(true);
       }
-
       // 2. Only load Home Data AFTER settings are processed
       loadHomeData();
       
-    }).getUserSettings();
+    }).loadMasterData();
   };
 
   function loadHomeData() {
-    google.script.run.withSuccessHandler(data => {
-      currentHomeData = data;
-      renderHome(data);
-    }).getHomeData();
+    hideLoader();
+    console.log("Constructing HomeData with MasterData");
+    currentHomeData = constructHomeData(
+      window.MasterData.transactions.slice(1),
+      window.MasterData.categories.slice(1),
+      window.MasterData.accounts.slice(1)
+    );
+    console.log("HomeData constructed:", currentHomeData);
+    renderHome(currentHomeData);
   }
 
   function showView(viewName) {
@@ -49,6 +71,11 @@
     if(viewName === 'transaction') {
       navItems[2].classList.add('active');
       loadTransactions(); // Call the fetcher
+      // Show Add button only here
+      document.getElementById('globalAddBtn').style.display = 'flex';
+    }else {
+      // Hide for all other views
+      document.getElementById('globalAddBtn').style.display = 'none';
     }
     if(viewName === 'category') {
       navItems[3].classList.add('active');

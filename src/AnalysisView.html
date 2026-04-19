@@ -15,17 +15,8 @@
 
   #analysisView .chart-wrapper {
     position: relative;
-    height: 300px; /* Fixed height to prevent collapse */
+    height: 300px;
     width: 100%;
-  }
-
-  #analysisView .year-select {
-    background: #1a1a1a;
-    color: white;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 4px 8px;
-    font-size: 14px;
   }
 
   #analysisView .trend-toggle-btn {
@@ -34,21 +25,132 @@
     text-transform: uppercase;
     padding: 5px 12px;
   }
+
+  #analysisView .year-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 12px;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  #analysisView .year-trigger .material-icons {
+    font-size: 16px;
+    color: var(--accent);
+  }
+
+  #analysisView .cat-filter-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 12px;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  #analysisView .cat-filter-trigger .material-icons {
+    font-size: 16px;
+    color: var(--accent);
+  }
+  #analysisView .cat-filter-trigger .trigger-label {
+    flex-grow: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .an-year-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 14px;
+    margin-bottom: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+    transition: all 0.2s;
+  }
+  .an-year-option.selected {
+    background: rgba(var(--accent-rgb, 37,64,107), 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .an-year-option .material-icons { font-size: 18px; opacity: 0; }
+  .an-year-option.selected .material-icons { opacity: 1; color: var(--accent); }
+
+  .an-cat-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-radius: 14px;
+    margin-bottom: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .an-cat-option.selected {
+    background: rgba(var(--accent-rgb, 37,64,107), 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .an-cat-option .material-icons { font-size: 18px; opacity: 0; }
+  .an-cat-option.selected .material-icons { opacity: 1; color: var(--accent); }
+
+  #analysisView .stat-pill {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    flex: 1;
+    text-align: center;
+  }
+  #analysisView .stat-pill .pill-label {
+    font-size: 10px;
+    color: var(--text-sec);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  #analysisView .stat-pill .pill-value {
+    font-size: 15px;
+    font-weight: 800;
+  }
 </style>
 
 <div id="analysisView" class="view-screen">
-  <div class="header px-3 pt-3 analysis-header">
+  <div class="header px-3 pt-3 pb-3 analysis-header">
     <div class="d-flex justify-content-between align-items-center mb-2">
       <h2 class="m-0 fw-bold">Analysis</h2>
-      <select id="analysisYearPicker" class="year-select" onchange="loadAnalysis()">
-        <option value="All">All Years</option>
-        <option value="2026" selected>2026</option>
-        <option value="2025">2025</option>
-      </select>
+      <div class="year-trigger" onclick="openAnYearPicker()">
+        <span class="material-icons">calendar_today</span>
+        <span id="anYearTriggerLabel">All Years</span>
+        <span class="material-icons">expand_more</span>
+      </div>
     </div>
   </div>
 
-  <div class="px-3 mt-3 pb-5">
+  <div class="px-3 mt-4 pb-5">
+
     <div class="analysis-card">
       <h6 class="fw-bold mb-3 opacity-75">Account Performance</h6>
       <div class="chart-wrapper">
@@ -64,148 +166,584 @@
           <button id="anTrendIncBtn" class="btn btn-sm btn-outline-primary trend-toggle-btn" onclick="setAnalysisTrendType('Income')">Inc</button>
         </div>
       </div>
-      
-      <select id="analysisCatFilter" class="form-select form-select-sm mb-3 bg-dark text-white border-secondary" onchange="renderAnalysisTrendChart()">
-        <option value="All">All Categories</option>
-      </select>
-
+      <div class="cat-filter-trigger" onclick="openAnCatPicker()">
+        <span class="material-icons">grid_view</span>
+        <span class="trigger-label" id="anCatTriggerLabel">All Categories</span>
+        <span class="material-icons" style="font-size:18px; opacity:0.5">expand_more</span>
+      </div>
       <div class="chart-wrapper">
         <canvas id="analysisTrendChartCanvas"></canvas>
       </div>
     </div>
+
+    <div class="analysis-card">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold m-0 opacity-75">Monthly Net Savings</h6>
+        <div id="anSavingsBadge" class="small fw-bold px-2 py-1 rounded-pill" style="font-size:11px;"></div>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="anSavingsChartCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="analysis-card">
+      <h6 class="fw-bold mb-3 opacity-75">Expense Breakdown</h6>
+      <div class="chart-wrapper" style="height:280px;">
+        <canvas id="anExpBreakdownCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="analysis-card">
+      <h6 class="fw-bold mb-1 opacity-75">Loan Tracker</h6>
+      <small class="opacity-50 d-block mb-3">Principal paid down vs interest paid over time</small>
+      <div class="chart-wrapper">
+        <canvas id="anLoanChartCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="analysis-card">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h6 class="fw-bold m-0 opacity-75">Savings Rate</h6>
+        <span class="small opacity-50">% of income saved</span>
+      </div>
+      <div id="anSavingsRateSummary" class="d-flex gap-2 mb-3"></div>
+      <div class="chart-wrapper">
+        <canvas id="anSavingsRateCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="analysis-card">
+      <h6 class="fw-bold mb-1 opacity-75">Account Balance Over Time</h6>
+      <small class="opacity-50 d-block mb-3">Running net balance per account month by month</small>
+      <div class="chart-wrapper">
+        <canvas id="anAccBalanceCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="analysis-card">
+      <h6 class="fw-bold mb-1 opacity-75">Income vs Expense Over Time</h6>
+      <small class="opacity-50 d-block mb-3">Cumulative totals year by year</small>
+      <div class="chart-wrapper">
+        <canvas id="anIncExpTimeCanvas"></canvas>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<script>
-  // Scoped variables to prevent collision with Home screen
-  let anBarChart = null;
-  let anTrendChart = null;
-  let anTrendType = 'Expense';
+<!-- Year Picker Bottom Sheet -->
+<div id="anYearPickerOverlay" class="modal-overlay" onclick="closeAnYearPicker()"></div>
+<div id="anYearPickerSheet" class="theme-modal">
+  <div class="modal-handle"></div>
+  <h5 class="fw-bold mb-4 px-1">Select Year</h5>
+  <div id="anYearOptionsList"></div>
+</div>
 
-  // Shared options for Analysis charts
-  const anChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'bottom', labels: { color: '#888', font: { size: 10 }, boxWidth: 10 } }
-    },
-    scales: {
-      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#666', font: { size: 10 } } },
-      x: { grid: { display: false }, ticks: { color: '#666', font: { size: 10 } } }
-    }
+<!-- Category Picker Bottom Sheet -->
+<div id="anCatPickerOverlay" class="modal-overlay" onclick="closeAnCatPicker()"></div>
+<div id="anCatPickerSheet" class="theme-modal">
+  <div class="modal-handle"></div>
+  <h5 class="fw-bold mb-4 px-1">Select Category</h5>
+  <div id="anCatOptionsList"></div>
+</div>
+
+<script>
+  /* ── State ───────────────────────────────────────────── */
+  let anBarChart     = null;
+  let anTrendChart   = null;
+  let anSavingsChart = null;
+  let anExpBreakdown = null;
+  let anLoanChart    = null;
+  let anSavingsRate  = null;
+  let anAccBalance   = null;
+  let anIncExpTime   = null;
+
+  let anTrendType    = 'Expense';
+  let anSelectedYear = 'All';
+  let anSelectedCat  = 'All';
+
+  const CHART_COLORS = [
+    '#3b82f6','#10b981','#f59e0b','#ef4444',
+    '#8b5cf6','#06b6d4','#f97316','#ec4899',
+    '#14b8a6','#84cc16'
+  ];
+
+  /* ── Animation configs ───────────────────────────────── */
+  const anAnimation = {
+    duration: 900,
+    easing: 'easeOutQuart'
   };
 
-  function loadAnalysis() {
-    // Check if view is active
-    if (document.getElementById('analysisView').style.display === 'none') return;
+  const anAnimationScale = {
+    animateRotate: true,
+    animateScale: true,
+    duration: 900,
+    easing: 'easeOutQuart'
+  };
 
-    google.script.run.withSuccessHandler(data => {
-      // These are global variables likely defined in GlobalJS or TransactionJS
+  /* ── Theme-aware chart options ───────────────────────── */
+  function getThemeColors() {
+    const style   = getComputedStyle(document.body);
+    const textSec = style.getPropertyValue('--text-sec').trim() || '#888';
+    const text    = style.getPropertyValue('--text').trim()     || '#000';
+    const border  = style.getPropertyValue('--border').trim()   || 'rgba(0,0,0,0.1)';
+    return { textSec, text, border };
+  }
+
+  function anBaseOptions() {
+    const { textSec, border } = getThemeColors();
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: anAnimation,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: textSec, font: { size: 10 }, boxWidth: 10 } }
+      },
+      scales: {
+        y: { grid: { color: border }, ticks: { color: textSec, font: { size: 10 } } },
+        x: { grid: { display: false }, ticks: { color: textSec, font: { size: 10 } } }
+      }
+    };
+  }
+
+  function anNoLegendOptions() {
+    const opts = anBaseOptions();
+    opts.plugins.legend = { display: false };
+    return opts;
+  }
+
+  /* ── Intersection Observer helper ────────────────────── */
+  function anObserve(canvasId, renderFn) {
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) { renderFn(); return; }
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) { renderFn(); obs.unobserve(entry.target); }
+      });
+    }, { threshold: 0.15 });
+    observer.observe(el);
+  }
+
+  /* ── Year Picker ─────────────────────────────────────── */
+  function openAnYearPicker() {
+    const years = ['All', ...getAvailableYears()];
+    document.getElementById('anYearOptionsList').innerHTML = years.map(y => `
+      <div class="an-year-option ${anSelectedYear === y ? 'selected' : ''}" onclick="selectAnYear('${y}')">
+        <span>${y === 'All' ? 'All Years' : y}</span>
+        <span class="material-icons">check_circle</span>
+      </div>`).join('');
+    document.getElementById('anYearPickerOverlay').classList.add('active');
+    document.getElementById('anYearPickerSheet').classList.add('active');
+  }
+
+  function closeAnYearPicker() {
+    document.getElementById('anYearPickerOverlay').classList.remove('active');
+    document.getElementById('anYearPickerSheet').classList.remove('active');
+  }
+
+  function selectAnYear(year) {
+    anSelectedYear = year;
+    document.getElementById('anYearTriggerLabel').innerText = year === 'All' ? 'All Years' : year;
+    closeAnYearPicker();
+    anSelectedCat = 'All';
+    document.getElementById('anCatTriggerLabel').innerText = 'All Categories';
+    loadAnalysis();
+  }
+
+  function getAvailableYears() {
+    const s = new Set();
+    (allTransactions || []).forEach(t => s.add(new Date(t[0]).getFullYear().toString()));
+    return Array.from(s).sort();
+  }
+
+  /* ── Category Picker ─────────────────────────────────── */
+  function openAnCatPicker() {
+    const options = [{ id: 'All', name: 'All Categories' }];
+    Object.keys(categoryMap).forEach(id => {
+      if (categoryMap[id].type === anTrendType) options.push({ id, name: categoryMap[id].name });
+    });
+    document.getElementById('anCatOptionsList').innerHTML = options.map(o => `
+      <div class="an-cat-option ${anSelectedCat === o.id ? 'selected' : ''}" onclick="selectAnCat('${o.id}', '${o.name}')">
+        <span>${o.name}</span>
+        <span class="material-icons">check_circle</span>
+      </div>`).join('');
+    document.getElementById('anCatPickerOverlay').classList.add('active');
+    document.getElementById('anCatPickerSheet').classList.add('active');
+  }
+
+  function closeAnCatPicker() {
+    document.getElementById('anCatPickerOverlay').classList.remove('active');
+    document.getElementById('anCatPickerSheet').classList.remove('active');
+  }
+
+  function selectAnCat(id, name) {
+    anSelectedCat = id;
+    document.getElementById('anCatTriggerLabel').innerText = name;
+    closeAnCatPicker();
+    renderAnalysisTrendChart();
+  }
+
+  /* ── Core load ───────────────────────────────────────── */
+  function loadAnalysis() {
+    if (document.getElementById('analysisView').style.display === 'none') return;
+    showLoader();
+    setTimeout(() => {
+      const data      = constructTransactionData();
       allTransactions = data.transactions;
-      categoryMap = data.categories;
-      accountMap = data.accounts;
-      
+      categoryMap     = data.categories;
+      accountMap      = data.accounts;
+      anSelectedCat   = 'All';
+      document.getElementById('anCatTriggerLabel').innerText = 'All Categories';
+      destroyAll();
       refreshAnalysisUI();
-    }).getTransactionData();
+      hideLoader();
+    }, 0);
   }
 
   function setAnalysisTrendType(type) {
     anTrendType = type;
     document.getElementById('anTrendExpBtn').classList.toggle('active', type === 'Expense');
     document.getElementById('anTrendIncBtn').classList.toggle('active', type === 'Income');
-    refreshAnalysisUI();
-  }
-
-  function refreshAnalysisUI() {
-    populateAnalysisDropdown();
-    renderAnalysisBarChart();
+    anSelectedCat = 'All';
+    document.getElementById('anCatTriggerLabel').innerText = 'All Categories';
     renderAnalysisTrendChart();
   }
 
-  function populateAnalysisDropdown() {
-    const sel = document.getElementById('analysisCatFilter');
-    const prev = sel.value;
-    sel.innerHTML = '<option value="All">All Categories</option>';
-    
-    Object.keys(categoryMap).forEach(id => {
-      if (categoryMap[id].type === anTrendType) {
-        sel.innerHTML += `<option value="${id}">${categoryMap[id].name}</option>`;
-      }
-    });
-    sel.value = prev || 'All';
+  function destroyAll() {
+    [anBarChart, anTrendChart, anSavingsChart, anExpBreakdown,
+     anLoanChart, anSavingsRate, anAccBalance, anIncExpTime
+    ].forEach(c => { if (c) c.destroy(); });
+  }
+
+  function refreshAnalysisUI() {
+    anObserve('analysisBarChartCanvas',   renderAnalysisBarChart);
+    anObserve('analysisTrendChartCanvas', renderAnalysisTrendChart);
+    anObserve('anSavingsChartCanvas',     renderSavingsChart);
+    anObserve('anExpBreakdownCanvas',     renderExpBreakdown);
+    anObserve('anLoanChartCanvas',        renderLoanChart);
+    anObserve('anSavingsRateCanvas',      renderSavingsRateChart);
+    anObserve('anAccBalanceCanvas',       renderAccBalanceChart);
+    anObserve('anIncExpTimeCanvas',       renderIncExpTimeChart);
   }
 
   function getFilteredAnData() {
-    const year = document.getElementById('analysisYearPicker').value;
-    return allTransactions.filter(t => {
-      const tYear = new Date(t[0]).getFullYear().toString();
-      return year === "All" || tYear === year;
+    return (allTransactions || []).filter(t => {
+      const y = new Date(t[0]).getFullYear().toString();
+      return anSelectedYear === 'All' || y === anSelectedYear;
     });
   }
 
+  /* ── 1. Account Performance ──────────────────────────── */
   function renderAnalysisBarChart() {
-    const data = getFilteredAnData();
+    const data  = getFilteredAnData();
     const stats = {};
-    
     data.forEach(t => {
-      const accId = t[4];
-      if (!stats[accId]) stats[accId] = { in: 0, out: 0 };
-      if (t[2] === 'Income') stats[accId].in += parseFloat(t[3]);
-      else stats[accId].out += parseFloat(t[3]);
+      const id = t[4];
+      if (!stats[id]) stats[id] = { in: 0, out: 0 };
+      if (t[2] === 'Income') stats[id].in  += parseFloat(t[3]);
+      else                   stats[id].out += parseFloat(t[3]);
     });
-
     const ctx = document.getElementById('analysisBarChartCanvas').getContext('2d');
     if (anBarChart) anBarChart.destroy();
-    
     anBarChart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: Object.keys(stats).map(id => accountMap[id]?.name || 'Acc'),
+        labels: Object.keys(stats).map(id => accountMap[id]?.name || id),
         datasets: [
-          { label: 'Income', data: Object.values(stats).map(s => s.in), backgroundColor: '#28a745', borderRadius: 4 },
-          { label: 'Expense', data: Object.values(stats).map(s => s.out), backgroundColor: '#ff5252', borderRadius: 4 }
+          { label: 'Income',  data: Object.values(stats).map(s => s.in),  backgroundColor: '#10b981', borderRadius: 4 },
+          { label: 'Expense', data: Object.values(stats).map(s => s.out), backgroundColor: '#ef4444', borderRadius: 4 }
         ]
       },
-      options: anChartOptions
+      options: anBaseOptions()
     });
   }
 
+  /* ── 2. Category Trends ──────────────────────────────── */
   function renderAnalysisTrendChart() {
-    const data = getFilteredAnData();
-    const selCat = document.getElementById('analysisCatFilter').value;
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const monthlyMap = {};
-    const catNames = new Set();
-
+    const data       = getFilteredAnData();
+    const months     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const isAllYears = anSelectedYear === 'All';
+    const groupMap   = {}, catNames = new Set();
+    const yearSet    = new Set();
+    data.forEach(t => { if (t[2] === anTrendType) yearSet.add(new Date(t[0]).getFullYear().toString()); });
+    const years = Array.from(yearSet).sort();
     data.forEach(t => {
-      const d = new Date(t[0]);
-      const mLabel = months[d.getMonth()];
-      const cId = t[5];
-      
-      if (t[2] === anTrendType && (selCat === 'All' || selCat === cId)) {
-        if (!monthlyMap[mLabel]) monthlyMap[mLabel] = {};
+      const d     = new Date(t[0]), cId = t[5];
+      const label = isAllYears ? d.getFullYear().toString() : months[d.getMonth()];
+      if (t[2] === anTrendType && (anSelectedCat === 'All' || anSelectedCat === cId)) {
+        if (!groupMap[label]) groupMap[label] = {};
         const cName = categoryMap[cId]?.name || 'Unknown';
-        monthlyMap[mLabel][cName] = (monthlyMap[mLabel][cName] || 0) + parseFloat(t[3]);
+        groupMap[label][cName] = (groupMap[label][cName] || 0) + parseFloat(t[3]);
         catNames.add(cName);
       }
     });
-
+    const xLabels  = isAllYears ? years : months;
     const datasets = Array.from(catNames).map((name, i) => ({
       label: name,
-      data: months.map(m => monthlyMap[m]?.[name] || 0),
-      borderColor: `hsl(${(i * 60) % 360}, 65%, 55%)`,
-      tension: 0.3,
-      borderWidth: 2,
-      pointRadius: 2
+      data: xLabels.map(l => groupMap[l]?.[name] || 0),
+      borderColor: CHART_COLORS[i % CHART_COLORS.length],
+      tension: 0.3, borderWidth: 2, pointRadius: 2, fill: false
     }));
-
     const ctx = document.getElementById('analysisTrendChartCanvas').getContext('2d');
     if (anTrendChart) anTrendChart.destroy();
-    
     anTrendChart = new Chart(ctx, {
       type: 'line',
-      data: { labels: months, datasets: datasets },
-      options: anChartOptions
+      data: { labels: xLabels, datasets },
+      options: anBaseOptions()
+    });
+  }
+
+  /* ── 3. Monthly Net Savings ──────────────────────────── */
+  function renderSavingsChart() {
+    const data       = getFilteredAnData();
+    const months     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const isAllYears = anSelectedYear === 'All';
+    const yearSet    = new Set();
+    data.forEach(t => yearSet.add(new Date(t[0]).getFullYear().toString()));
+    const years   = Array.from(yearSet).sort();
+    const xLabels = isAllYears ? years : months;
+    const netMap  = {};
+    xLabels.forEach(l => netMap[l] = 0);
+    data.forEach(t => {
+      const d     = new Date(t[0]);
+      const label = isAllYears ? d.getFullYear().toString() : months[d.getMonth()];
+      const amt   = parseFloat(t[3]) || 0;
+      netMap[label] = (netMap[label] || 0) + (t[2] === 'Income' ? amt : -amt);
+    });
+    const values     = xLabels.map(l => netMap[l] || 0);
+    const colors     = values.map(v => v >= 0 ? '#10b981' : '#ef4444');
+    const totalSaved = values.reduce((a, b) => a + b, 0);
+    const badge      = document.getElementById('anSavingsBadge');
+    badge.innerText        = (totalSaved >= 0 ? '+ ' : '- ') + formatINR(Math.abs(totalSaved));
+    badge.style.background = totalSaved >= 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+    badge.style.color      = totalSaved >= 0 ? '#10b981' : '#ef4444';
+    const ctx  = document.getElementById('anSavingsChartCanvas').getContext('2d');
+    if (anSavingsChart) anSavingsChart.destroy();
+    const opts = anNoLegendOptions();
+    opts.plugins.tooltip = { callbacks: { label: ctx => formatINR(ctx.parsed.y) } };
+    anSavingsChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: xLabels, datasets: [{ label: 'Net Savings', data: values, backgroundColor: colors, borderRadius: 4 }] },
+      options: opts
+    });
+  }
+
+  /* ── 4. Expense Breakdown ────────────────────────────── */
+  function renderExpBreakdown() {
+    const data      = getFilteredAnData().filter(t => t[2] === 'Expense');
+    const catTotals = {};
+    data.forEach(t => { catTotals[t[5]] = (catTotals[t[5]] || 0) + parseFloat(t[3]); });
+    const labels = Object.keys(catTotals).map(id => categoryMap[id]?.name || id);
+    const values = Object.values(catTotals);
+    const total  = values.reduce((a, b) => a + b, 0);
+    const ctx    = document.getElementById('anExpBreakdownCanvas').getContext('2d');
+    if (anExpBreakdown) anExpBreakdown.destroy();
+    anExpBreakdown = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: values, backgroundColor: CHART_COLORS, borderWidth: 0 }] },
+      plugins: [{
+        id: 'centerText',
+        afterDraw(chart) {
+          const { ctx: c, width: w, height: h } = chart;
+          const { textSec, text } = getThemeColors();
+          c.restore();
+          c.textAlign = 'center'; c.textBaseline = 'middle';
+          c.fillStyle = textSec; c.font = '12px Segoe UI';
+          c.fillText('Total Expense', w / 2, h / 2 - 14);
+          c.fillStyle = text; c.font = 'bold 16px Segoe UI';
+          c.fillText(formatINR(total), w / 2, h / 2 + 12);
+          c.save();
+        }
+      }],
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        animation: anAnimationScale,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: getThemeColors().textSec, font: { size: 10 }, boxWidth: 10 } }
+        }
+      }
+    });
+  }
+
+  /* ── 5. Loan Tracker ─────────────────────────────────── */
+  function renderLoanChart() {
+    const data         = getFilteredAnData();
+    const months       = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const isAllYears   = anSelectedYear === 'All';
+    const yearSet      = new Set();
+    data.forEach(t => yearSet.add(new Date(t[0]).getFullYear().toString()));
+    const years        = Array.from(yearSet).sort();
+    const xLabels      = isAllYears ? years : months;
+    const principleIds = Object.keys(categoryMap).filter(id => categoryMap[id].name.toLowerCase().includes('principle') || categoryMap[id].name.toLowerCase().includes('principal'));
+    const interestIds  = Object.keys(categoryMap).filter(id => categoryMap[id].name.toLowerCase().includes('interest'));
+    const principleMap = {}, interestMap = {};
+    xLabels.forEach(l => { principleMap[l] = 0; interestMap[l] = 0; });
+    data.forEach(t => {
+      const d     = new Date(t[0]);
+      const label = isAllYears ? d.getFullYear().toString() : months[d.getMonth()];
+      const amt   = parseFloat(t[3]) || 0;
+      if (principleIds.includes(t[5])) principleMap[label] = (principleMap[label] || 0) + amt;
+      if (interestIds.includes(t[5]))  interestMap[label]  = (interestMap[label]  || 0) + amt;
+    });
+    const ctx = document.getElementById('anLoanChartCanvas').getContext('2d');
+    if (anLoanChart) anLoanChart.destroy();
+    anLoanChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: xLabels,
+        datasets: [
+          { label: 'Principal', data: xLabels.map(l => principleMap[l]), backgroundColor: '#3b82f6', borderRadius: 4 },
+          { label: 'Interest',  data: xLabels.map(l => interestMap[l]),  backgroundColor: '#f59e0b', borderRadius: 4 }
+        ]
+      },
+      options: anBaseOptions()
+    });
+  }
+
+  /* ── 6. Savings Rate % ───────────────────────────────── */
+  function renderSavingsRateChart() {
+    const data       = getFilteredAnData();
+    const months     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const isAllYears = anSelectedYear === 'All';
+    const yearSet    = new Set();
+    data.forEach(t => yearSet.add(new Date(t[0]).getFullYear().toString()));
+    const years   = Array.from(yearSet).sort();
+    const xLabels = isAllYears ? years : months;
+    const incMap  = {}, expMap = {};
+    xLabels.forEach(l => { incMap[l] = 0; expMap[l] = 0; });
+    data.forEach(t => {
+      const d     = new Date(t[0]);
+      const label = isAllYears ? d.getFullYear().toString() : months[d.getMonth()];
+      const amt   = parseFloat(t[3]) || 0;
+      if (t[2] === 'Income') incMap[label] = (incMap[label] || 0) + amt;
+      else                   expMap[label] = (expMap[label] || 0) + amt;
+    });
+    const rates = xLabels.map(l => {
+      const inc = incMap[l] || 0;
+      if (inc === 0) return 0;
+      return parseFloat((((inc - expMap[l]) / inc) * 100).toFixed(1));
+    });
+    const validRates = rates.filter(r => r !== 0);
+    const avgRate = validRates.length ? (validRates.reduce((a, b) => a + b, 0) / validRates.length).toFixed(1) : 0;
+    const maxRate = validRates.length ? Math.max(...validRates).toFixed(1) : 0;
+    const minRate = validRates.length ? Math.min(...validRates).toFixed(1) : 0;
+    document.getElementById('anSavingsRateSummary').innerHTML = `
+      <div class="stat-pill">
+        <div class="pill-label">Average</div>
+        <div class="pill-value" style="color:${avgRate >= 20 ? '#10b981' : '#f59e0b'}">${avgRate}%</div>
+      </div>
+      <div class="stat-pill">
+        <div class="pill-label">Best</div>
+        <div class="pill-value" style="color:#10b981">${maxRate}%</div>
+      </div>
+      <div class="stat-pill">
+        <div class="pill-label">Lowest</div>
+        <div class="pill-value" style="color:${minRate < 0 ? '#ef4444' : '#f59e0b'}">${minRate}%</div>
+      </div>`;
+    const ctx  = document.getElementById('anSavingsRateCanvas').getContext('2d');
+    if (anSavingsRate) anSavingsRate.destroy();
+    const opts = anNoLegendOptions();
+    opts.plugins.tooltip    = { callbacks: { label: ctx => ctx.parsed.y + '%' } };
+    opts.scales.y.ticks.callback = v => v + '%';
+    anSavingsRate = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: xLabels,
+        datasets: [{
+          label: 'Savings Rate %',
+          data: rates,
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139,92,246,0.1)',
+          fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3,
+          pointBackgroundColor: rates.map(r => r >= 20 ? '#10b981' : r >= 0 ? '#f59e0b' : '#ef4444')
+        }]
+      },
+      options: opts
+    });
+  }
+
+  /* ── 7. Account Balance Over Time ────────────────────── */
+  function renderAccBalanceChart() {
+    const data       = [...(allTransactions || [])].sort((a, b) => new Date(a[0]) - new Date(b[0]));
+    const months     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const isAllYears = anSelectedYear === 'All';
+    const labelSet   = new Set();
+    data.forEach(t => {
+      const d = new Date(t[0]);
+      labelSet.add(isAllYears ? d.getFullYear().toString() : `${months[d.getMonth()]} ${d.getFullYear()}`);
+    });
+    const xLabels = Array.from(labelSet).sort((a, b) => {
+      if (isAllYears) return parseInt(a) - parseInt(b);
+      const [mA, yA] = a.split(' '), [mB, yB] = b.split(' ');
+      if (yA !== yB) return parseInt(yA) - parseInt(yB);
+      return months.indexOf(mA) - months.indexOf(mB);
+    });
+    const filteredLabels = isAllYears ? xLabels : xLabels.filter(l => l.includes(anSelectedYear));
+    const accIds         = Object.keys(accountMap);
+    const balanceMap     = {};
+    accIds.forEach(id => { balanceMap[id] = {}; filteredLabels.forEach(l => balanceMap[id][l] = 0); });
+    data.forEach(t => {
+      const d     = new Date(t[0]);
+      const label = isAllYears ? d.getFullYear().toString() : `${months[d.getMonth()]} ${d.getFullYear()}`;
+      if (!filteredLabels.includes(label)) return;
+      const accId = t[4];
+      if (!balanceMap[accId]) return;
+      const amt = parseFloat(t[3]) || 0;
+      balanceMap[accId][label] = (balanceMap[accId][label] || 0) + (t[2] === 'Income' ? amt : -amt);
+    });
+    accIds.forEach(id => {
+      let running = 0;
+      filteredLabels.forEach(l => { running += balanceMap[id][l]; balanceMap[id][l] = running; });
+    });
+    const datasets = accIds.map((id, i) => ({
+      label: accountMap[id]?.name || id,
+      data: filteredLabels.map(l => balanceMap[id][l]),
+      borderColor: CHART_COLORS[i % CHART_COLORS.length],
+      tension: 0.3, borderWidth: 2, pointRadius: 2, fill: false
+    }));
+    const ctx = document.getElementById('anAccBalanceCanvas').getContext('2d');
+    if (anAccBalance) anAccBalance.destroy();
+    anAccBalance = new Chart(ctx, {
+      type: 'line',
+      data: { labels: filteredLabels, datasets },
+      options: anBaseOptions()
+    });
+  }
+
+  /* ── 8. Income vs Expense Over Time ──────────────────── */
+  function renderIncExpTimeChart() {
+    const data       = getFilteredAnData();
+    const months     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const isAllYears = anSelectedYear === 'All';
+    const yearSet    = new Set();
+    data.forEach(t => yearSet.add(new Date(t[0]).getFullYear().toString()));
+    const years   = Array.from(yearSet).sort();
+    const xLabels = isAllYears ? years : months;
+    const incMap  = {}, expMap = {};
+    xLabels.forEach(l => { incMap[l] = 0; expMap[l] = 0; });
+    data.forEach(t => {
+      const d     = new Date(t[0]);
+      const label = isAllYears ? d.getFullYear().toString() : months[d.getMonth()];
+      const amt   = parseFloat(t[3]) || 0;
+      if (t[2] === 'Income') incMap[label] = (incMap[label] || 0) + amt;
+      else                   expMap[label] = (expMap[label] || 0) + amt;
+    });
+    const ctx = document.getElementById('anIncExpTimeCanvas').getContext('2d');
+    if (anIncExpTime) anIncExpTime.destroy();
+    anIncExpTime = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: xLabels,
+        datasets: [
+          { label: 'Income',  data: xLabels.map(l => incMap[l]), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 2 },
+          { label: 'Expense', data: xLabels.map(l => expMap[l]), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 2 }
+        ]
+      },
+      options: anBaseOptions()
     });
   }
 </script>

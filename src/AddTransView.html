@@ -1,8 +1,11 @@
 <div id="addTransOverlay" class="modal-overlay" onclick="closeAddTrans()"></div>
 <div id="addTransModal" class="full-height-modal">
-  <div class="modal-header d-flex align-items-center p-3">
-    <span class="material-icons me-3" onclick="closeAddTrans()" style="cursor:pointer; color: var(--accent);">close</span>
-    <h5 class="m-0 fw-bold">New Transaction</h5>
+  <div class="modal-header d-flex align-items-center justify-content-between p-3">
+    <div class="d-flex align-items-center">
+      <span class="material-icons me-3" onclick="closeAddTrans()" style="cursor:pointer; color: var(--accent);">close</span>
+      <h5 class="m-0 fw-bold">New Transaction</h5>
+    </div>
+    <span id="atDeleteBtn" class="material-icons text-danger" style="display:none; cursor:pointer" onclick="deleteCurrentTransaction()">delete</span>
   </div>
 
   <div class="modal-body p-3">
@@ -14,9 +17,6 @@
       <div id="btnTypeInc" class="type-pill" data-type="Income" onclick="setTransType('Income')">
         <span class="material-icons">south_west</span> Income
       </div>
-      <div id="btnTypeTrf" class="type-pill" data-type="Transfer" onclick="setTransType('Transfer')">
-        <span class="material-icons">sync_alt</span> Transfer
-      </div>
     </div>
 
     <div class="input-card mb-3">
@@ -25,17 +25,17 @@
         <input type="number" id="atAmount" class="invisible-input flex-grow-1" placeholder="0.00" step="0.01">
         <span class="material-icons opacity-50">calculate</span>
       </div>
-      
+
       <div class="divider my-3"></div>
-      
+
       <div class="row">
         <div class="col-6 border-end border-secondary border-opacity-25">
-           <small class="card-label">Date</small>
-           <input type="date" id="atDate" class="invisible-input small-text mt-1">
+          <small class="card-label">Date</small>
+          <input type="date" id="atDate" class="invisible-input small-text mt-1">
         </div>
         <div class="col-6 ps-3">
-           <small class="card-label">Time</small>
-           <input type="time" id="atTime" class="invisible-input small-text mt-1">
+          <small class="card-label">Time</small>
+          <input type="time" id="atTime" class="invisible-input small-text mt-1">
         </div>
       </div>
 
@@ -49,31 +49,57 @@
     </div>
 
     <label class="small opacity-50 fw-bold text-uppercase mb-2 d-block">Details</label>
-    
-    <div class="selector-card mb-3" onclick="document.getElementById('atCategory').focus()">
-       <div class="d-flex align-items-center w-100">
-         <div class="icon-circle me-3" id="atCatIconBg"><span class="material-icons" id="atCatIcon">category</span></div>
-         <div class="flex-grow-1">
-           <small class="card-label d-block">Category</small>
-           <select id="atCategory" class="custom-select" onchange="updateAtCatIcon()"></select>
-         </div>
-         <span class="material-icons opacity-25">expand_more</span>
-       </div>
+
+    <!-- Category Trigger -->
+    <div class="at-selector-trigger" onclick="openAtCatPicker()">
+      <div class="trigger-icon-circle" id="atCatIconWrap">
+        <span class="material-icons" id="atCatIcon">category</span>
+      </div>
+      <div class="trigger-texts">
+        <div class="trigger-label">Category</div>
+        <div class="trigger-value" id="atCatLabel">Select category</div>
+      </div>
+      <span class="material-icons chevron">expand_more</span>
     </div>
 
-    <div class="selector-card mb-4" onclick="document.getElementById('atAccount').focus()">
-       <div class="d-flex align-items-center w-100">
-         <div class="icon-circle me-3" style="background: #6366f1;"><span class="material-icons">account_balance_wallet</span></div>
-         <div class="flex-grow-1">
-           <small class="card-label d-block">Account</small>
-           <select id="atAccount" class="custom-select"></select>
-         </div>
-         <span class="material-icons opacity-25">expand_more</span>
-       </div>
+    <!-- Account Trigger -->
+    <div class="at-selector-trigger" onclick="openAtAccPicker()">
+      <div class="trigger-icon-circle" id="atAccIconWrap" style="background:#6366f1;">
+        <span class="material-icons" id="atAccIcon">account_balance_wallet</span>
+      </div>
+      <div class="trigger-texts">
+        <div class="trigger-label">Account</div>
+        <div class="trigger-value" id="atAccLabel">Select account</div>
+      </div>
+      <span class="material-icons chevron">expand_more</span>
     </div>
+
+    <!-- Hidden inputs to store selected IDs -->
+    <input type="hidden" id="atCategory">
+    <input type="hidden" id="atAccount">
 
     <button class="btn btn-save w-100 p-3 mt-2" onclick="submitNewTransaction()">
       <span class="material-icons me-2">check_circle</span> Save Transaction
     </button>
   </div>
+</div>
+
+<!-- Category Picker Bottom Sheet -->
+<div id="atCatPickerOverlay" class="modal-overlay" onclick="closeAtCatPicker()"></div>
+<div id="atCatPickerSheet" class="theme-modal">
+  <div class="modal-handle"></div>
+  <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+    <h5 class="fw-bold m-0">Select Category</h5>
+    <small id="atCatPickerType" class="fw-bold text-uppercase px-2 py-1 rounded-pill"
+           style="font-size:10px; letter-spacing:1px;"></small>
+  </div>
+  <div id="atCatOptionsList"></div>
+</div>
+
+<!-- Account Picker Bottom Sheet -->
+<div id="atAccPickerOverlay" class="modal-overlay" onclick="closeAtAccPicker()"></div>
+<div id="atAccPickerSheet" class="theme-modal">
+  <div class="modal-handle"></div>
+  <h5 class="fw-bold mb-4 px-1">Select Account</h5>
+  <div id="atAccOptionsList"></div>
 </div>

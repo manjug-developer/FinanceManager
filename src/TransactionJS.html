@@ -5,144 +5,175 @@
   let currentFilterRange = 'All time';
   let activeChips = { types: [], accounts: [], categories: [] };
 
-  function openTransEditModal(row) {
-  // Fill hidden ID (Assuming row[6] is your unique ID)
-  document.getElementById('editTransId').value = row[6];
-  
-  // Format date for input field (YYYY-MM-DD)
-  const d = new Date(row[0]);
-  const dateStr = d.toISOString().split('T')[0];
-  document.getElementById('editTransDate').value = dateStr;
-  
-  document.getElementById('editTransDesc').value = row[1];
-  document.getElementById('editTransAmt').value = row[3];
-  
-  // Populate Selects
-  const accSelect = document.getElementById('editTransAcc');
-  const catSelect = document.getElementById('editTransCat');
-  
-  accSelect.innerHTML = Object.keys(accountMap).map(id => 
-    `<option value="${id}" ${id == row[4] ? 'selected' : ''}>${accountMap[id].name}</option>`).join('');
-    
-  catSelect.innerHTML = Object.keys(categoryMap).map(id => 
-    `<option value="${id}" ${id == row[5] ? 'selected' : ''}>${categoryMap[id].name}</option>`).join('');
+  /* ── expand/collapse state ───────────────────────────────────────── */
+  let expandedYears  = new Set();
+  let expandedMonths = new Set();
 
-  document.getElementById('transEditOverlay').classList.add('active');
-  document.getElementById('transEditModal').classList.add('active');
-}
+  const MONTH_NAMES = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
 
-function closeTransEditModal() {
-  document.getElementById('transEditOverlay').classList.remove('active');
-  document.getElementById('transEditModal').classList.remove('active');
-}
-
-function processTransUpdate() {
-  const id = document.getElementById('editTransId').value;
-  const updatedRow = [
-    document.getElementById('editTransDate').value,
-    document.getElementById('editTransDesc').value,
-    allTransactions.find(t => t[6] === id)[2], // Keep original Type (Inc/Exp)
-    parseFloat(document.getElementById('editTransAmt').value),
-    document.getElementById('editTransAcc').value,
-    document.getElementById('editTransCat').value
-  ];
-
-  google.script.run.withSuccessHandler(() => {
-    closeTransEditModal();
-    loadTransactions(); // Refresh the list
-  }).updateTransaction(id, updatedRow);
-}
-
-function confirmDeleteTransaction() {
-  const id = document.getElementById('editTransId').value;
-  if (confirm("Are you sure you want to delete this transaction?")) {
-    google.script.run.withSuccessHandler(() => {
-      closeTransEditModal();
-      loadTransactions();
-    }).deleteTransaction(id);
+  /* ── data construction (unchanged) ──────────────────────────────── */
+  function constructTransactionData() {
+    const monthMap = {
+      Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',
+      Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'
+    };
+    const formattedTransactions = window.MasterData.transactions.slice(1).map(row => {
+      const [day, month, year] = row[1].split('-');
+      const isoDate = `${year}-${monthMap[month]}-${day.padStart(2,'0')}`;
+      return [
+        isoDate,  // [0] date
+        row[6],   // [1] notes
+        row[2],   // [2] type
+        row[3],   // [3] amount
+        row[4],   // [4] accountId
+        row[5],   // [5] categoryId
+        row[0]    // [6] txnId
+      ];
+    });
+    const formattedCategories = window.MasterData.categories.slice(1).reduce((acc, row) => {
+      acc[row[0]] = { name: row[1], type: row[2], icon: row[3] };
+      return acc;
+    }, {});
+    const formattedAccounts = window.MasterData.accounts.slice(1).reduce((acc, row) => {
+      acc[row[0]] = { name: row[1], icon: row[2] };
+      return acc;
+    }, {});
+    return { transactions: formattedTransactions, categories: formattedCategories, accounts: formattedAccounts };
   }
-}
 
-  /** 1. Data Loading */
+  /* ── load ────────────────────────────────────────────────────────── */
   function loadTransactions() {
-    const timeline = document.getElementById('transactionTimeline');
-    timeline.innerHTML = '<div class="text-center mt-5 opacity-50">Loading live data...</div>';
+    document.getElementById('transactionTimeline').innerHTML =
+      '<div class="text-center mt-5 opacity-50">Loading transactions...</div>';
+    showLoader();
+    setTimeout(() => {
+      hideLoader();
+      const data = constructTransactionData();
+      allTransactions = data.transactions;
+      categoryMap     = data.categories;
+      accountMap      = data.accounts;
 
-    google.script.run
-      .withSuccessHandler(data => {
-        allTransactions = data.transactions;
-        categoryMap = data.categories;
-        accountMap = data.accounts;
-        applyDateFilter('All time'); // Initial render
-        setupFilterUI();
-      })
-      .getTransactionData();
+      /* default: current year + current month open */
+      const now      = new Date();
+      const curYear  = now.getFullYear().toString();
+      const curMonth = `${curYear}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      expandedYears  = new Set([curYear]);
+      expandedMonths = new Set([curMonth]);
+
+      runMasterFilter();
+      setupFilterUI();
+    }, 0);
   }
 
-  /** 2. Date Filtering */
-  function applyDateFilter(range) {
-    currentFilterRange = range;
-    document.getElementById('currentDateRange').innerText = range;
-    closeDateFilter();
-    runMasterFilter();
-  }
-
-  /** 3. Advanced Filtering Logic */
+  /* ── chip filter UI ─────────────────────────────────────────────── */
   function setupFilterUI() {
     const accBox = document.getElementById('filterAccounts');
     const catBox = document.getElementById('filterCategories');
-    
-    accBox.innerHTML = Object.keys(accountMap).map(id => 
-      `<div class="chip" onclick="toggleChip(this, 'accounts', '${id}')">${accountMap[id].name}</div>`).join('');
-    
-    catBox.innerHTML = Object.keys(categoryMap).map(id => 
-      `<div class="chip" onclick="toggleChip(this, 'categories', '${id}')">${categoryMap[id].name}</div>`).join('');
+    accBox.innerHTML = Object.keys(accountMap).map(id =>
+      `<div class="chip" onclick="toggleChip(this,'accounts','${id}')">${accountMap[id].name}</div>`).join('');
+    catBox.innerHTML = Object.keys(categoryMap).map(id =>
+      `<div class="chip" onclick="toggleChip(this,'categories','${id}')">${categoryMap[id].name}</div>`).join('');
   }
 
   function toggleChip(el, group, val) {
     el.classList.toggle('active');
     const list = activeChips[group];
-    const idx = list.indexOf(val);
-    if (idx > -1) list.splice(idx, 1);
-    else list.push(val);
-    
+    const idx  = list.indexOf(val);
+    if (idx > -1) list.splice(idx, 1); else list.push(val);
     const count = activeChips.types.length + activeChips.accounts.length + activeChips.categories.length;
     document.getElementById('activeFilterCount').innerText = `${count} filters selected`;
   }
 
   function runAdvancedFilter() {
+    showLoader();
     closeAdvancedFilter();
-    runMasterFilter();
+    const count = activeChips.types.length + activeChips.accounts.length + activeChips.categories.length;
+    const dot   = document.getElementById('txnFilterDot');
+    if (dot) dot.style.display = count > 0 ? 'block' : 'none';
+    setTimeout(() => { runMasterFilter(); hideLoader(); }, 0);
   }
 
   function clearAllFilters() {
     activeChips = { types: [], accounts: [], categories: [] };
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    document.getElementById('activeFilterCount').innerText = `0 filters selected`;
+    document.getElementById('activeFilterCount').innerText = '0 filters selected';
+    const dot = document.getElementById('txnFilterDot');
+    if (dot) dot.style.display = 'none';
   }
 
-  /** 4. Master Filter & Render */
+  /* ── master filter ───────────────────────────────────────────────── */
   function runMasterFilter() {
-    const now = new Date();
-    
-    let filtered = allTransactions.filter(row => {
-      const d = new Date(row[0]);
-      
-      // Part A: Date Filter
-      if (currentFilterRange === 'Today' && d.toDateString() !== now.toDateString()) return false;
-      if (currentFilterRange === 'This Month' && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear())) return false;
-
-      // Part B: Chip Filters
-      if (activeChips.types.length > 0 && !activeChips.types.includes(row[2])) return false;
-      if (activeChips.accounts.length > 0 && !activeChips.accounts.includes(row[4])) return false;
+    const filtered = allTransactions.filter(row => {
+      if (activeChips.types.length      > 0 && !activeChips.types.includes(row[2]))      return false;
+      if (activeChips.accounts.length   > 0 && !activeChips.accounts.includes(row[4]))   return false;
       if (activeChips.categories.length > 0 && !activeChips.categories.includes(row[5])) return false;
-
       return true;
     });
-
     renderTimeline(filtered);
   }
 
+  /* ── collapse all ────────────────────────────────────────────────── */
+  function collapseAll() {
+    expandedYears.clear();
+    expandedMonths.clear();
+    document.querySelectorAll('.year-body').forEach(el  => el.style.display = 'none');
+    document.querySelectorAll('.month-body').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.year-chevron').forEach(ic  => ic.style.transform = 'rotate(-90deg)');
+    document.querySelectorAll('.month-chevron').forEach(ic => ic.style.transform = 'rotate(-90deg)');
+  }
+
+  /* ── toggle year / month ─────────────────────────────────────────── */
+  function toggleYear(yearKey) {
+    const body    = document.getElementById(`year-body-${yearKey}`);
+    const chevron = document.getElementById(`year-chev-${yearKey}`);
+    if (expandedYears.has(yearKey)) {
+      expandedYears.delete(yearKey);
+      body.style.display      = 'none';
+      chevron.style.transform = 'rotate(-90deg)';
+    } else {
+      expandedYears.add(yearKey);
+      body.style.display      = 'block';
+      chevron.style.transform = 'rotate(0deg)';
+    }
+  }
+
+  function toggleMonth(monthKey) {
+    const body    = document.getElementById(`month-body-${monthKey}`);
+    const chevron = document.getElementById(`month-chev-${monthKey}`);
+    if (expandedMonths.has(monthKey)) {
+      expandedMonths.delete(monthKey);
+      body.style.display      = 'none';
+      chevron.style.transform = 'rotate(-90deg)';
+    } else {
+      expandedMonths.add(monthKey);
+      body.style.display      = 'block';
+      chevron.style.transform = 'rotate(0deg)';
+    }
+  }
+
+  /* ── mini income/expense ratio bar ──────────────────────────────── */
+  function miniBar(income, expense) {
+    const total  = income + expense || 1;
+    const incPct = Math.round((income / total) * 100);
+    return `<div class="mini-bar">
+      <div class="mini-bar-inc" style="width:${incPct}%"></div>
+      <div class="mini-bar-exp" style="width:${100 - incPct}%"></div>
+    </div>`;
+  }
+
+  /* ── savings rate badge ──────────────────────────────────────────── */
+  function savingsBadge(net, income) {
+    if (!income) return '';
+    const rate  = Math.round((net / income) * 100);
+    const color = rate >= 30 ? '#10b981' : rate >= 10 ? '#f59e0b' : '#ef4444';
+    const icon  = rate >= 30 ? 'trending_up' : rate >= 10 ? 'trending_flat' : 'trending_down';
+    return `<span class="savings-badge" style="color:${color};background:${color}18;">
+              <span class="material-icons" style="font-size:11px">${icon}</span>${rate}% saved
+            </span>`;
+  }
+
+  /* ── main render ─────────────────────────────────────────────────── */
   function renderTimeline(data) {
     const container = document.getElementById('transactionTimeline');
     container.innerHTML = '';
@@ -152,54 +183,124 @@ function confirmDeleteTransaction() {
       return;
     }
 
-    // Grouping by Date
-    const groups = data.reduce((acc, row) => {
-      const d = new Date(row[0]).toISOString().split('T')[0];
-      if (!acc[d]) acc[d] = { items: [], total: 0 };
-      acc[d].items.push(row);
-      acc[d].total += (row[2] === 'Income' ? row[3] : -row[3]);
-      return acc;
-    }, {});
+    /* build hierarchy */
+    const yearMap = {};
+    data.forEach(row => {
+      const d        = new Date(row[0]);
+      const yearKey  = d.getFullYear().toString();
+      const monthKey = `${yearKey}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      const amt      = parseFloat(row[3]) || 0;
+      const isIncome = row[2] === 'Income';
 
-    Object.keys(groups).sort((a,b) => new Date(b) - new Date(a)).forEach(dateKey => {
-      const group = groups[dateKey];
-      const d = new Date(dateKey);
-      
+      if (!yearMap[yearKey]) yearMap[yearKey] = { income:0, expense:0, count:0, months:{} };
+      yearMap[yearKey].income  += isIncome ? amt : 0;
+      yearMap[yearKey].expense += isIncome ? 0   : amt;
+      yearMap[yearKey].count++;
+
+      if (!yearMap[yearKey].months[monthKey])
+        yearMap[yearKey].months[monthKey] = { income:0, expense:0, count:0, items:[] };
+      yearMap[yearKey].months[monthKey].income  += isIncome ? amt : 0;
+      yearMap[yearKey].months[monthKey].expense += isIncome ? 0   : amt;
+      yearMap[yearKey].months[monthKey].count++;
+      yearMap[yearKey].months[monthKey].items.push(row);
+    });
+
+    /* render years newest-first */
+    Object.keys(yearMap).sort((a,b) => b - a).forEach(yearKey => {
+      const yr       = yearMap[yearKey];
+      const yearNet  = yr.income - yr.expense;
+      const isYrOpen = expandedYears.has(yearKey);
+
       let html = `
-        <div class="day-group">
-          <div class="day-group-header">
-            <div class="d-flex align-items-center">
-              <div class="day-number">${d.getDate().toString().padStart(2,'0')}</div>
-              <div class="day-meta"><div>${d.toLocaleString('en-US',{month:'long',year:'numeric'})}</div><div>${d.toLocaleString('en-US',{weekday:'long'})}</div></div>
+        <div class="year-group">
+          <div class="year-header" onclick="toggleYear('${yearKey}')">
+            <div class="year-left">
+              <span class="year-label">${yearKey}</span>
+              <span class="year-count">${yr.count} transactions</span>
             </div>
-            <div class="day-total ${group.total >=0 ? 'amt-income' : 'amt-expense'}">${group.total >=0 ? '+' : ''}${formatINR(group.total)}</div>
-          </div>`;
-
-      group.items.forEach(row => {
-        const cat = categoryMap[row[5]] || {name:'Unknown', icon:'help'};
-        const acc = accountMap[row[4]] || {name:'Unknown'};
-        html += `
-          <div class="trans-card" onclick='openAddTrans(${JSON.stringify(row)})'>
-            <div class="trans-icon-box"><span class="material-icons opacity-50">${cat.icon}</span></div>
-            <div class="trans-info">
-              <div class="trans-title">${cat.name}</div>
-              <div class="trans-sub">
-                <span class="material-icons" style="font-size:12px; color:var(--accent)">account_balance_wallet</span>
-                <span>${acc.name}</span><span class="mx-1">•</span><span class="text-truncate">${row[1]}</span>
+            <div class="year-right">
+              <div class="year-io">
+                <span class="yr-inc"><span class="material-icons" style="font-size:10px">south_west</span>${formatINR(yr.income)}</span>
+                <span class="yr-exp"><span class="material-icons" style="font-size:10px">north_east</span>${formatINR(yr.expense)}</span>
               </div>
+              <div class="year-net ${yearNet>=0?'amt-income':'amt-expense'}">${yearNet>=0?'+':''}${formatINR(yearNet)}</div>
+              ${miniBar(yr.income, yr.expense)}
             </div>
-            <div class="trans-amt-box">
-              <div class="amt-val ${row[2] === 'Income' ? 'amt-income' : 'amt-expense'}">${row[2] === 'Income' ? '+' : '-'}${formatINR(row[3])}</div>
+            <span class="material-icons year-chevron" id="year-chev-${yearKey}"
+                  style="transform:rotate(${isYrOpen?'0':'-90'}deg)">expand_more</span>
+          </div>
+          <div class="year-body" id="year-body-${yearKey}" style="display:${isYrOpen?'block':'none'}">`;
+
+      /* months newest-first */
+      Object.keys(yr.months).sort((a,b) => b.localeCompare(a)).forEach(monthKey => {
+        const mo       = yr.months[monthKey];
+        const monthIdx = parseInt(monthKey.split('-')[1]) - 1;
+        const monthNet = mo.income - mo.expense;
+        const isMoOpen = expandedMonths.has(monthKey);
+
+        html += `
+          <div class="month-group">
+            <div class="month-header" onclick="toggleMonth('${monthKey}')">
+              <div class="month-left">
+                <span class="month-label">${MONTH_NAMES[monthIdx]}</span>
+                <span class="month-count">${mo.count} txn${mo.count!==1?'s':''}</span>
+              </div>
+              <div class="month-right">
+                <div class="month-io">
+                  <span class="mo-inc"><span class="material-icons" style="font-size:10px">south_west</span>${formatINR(mo.income)}</span>
+                  <span class="mo-exp"><span class="material-icons" style="font-size:10px">north_east</span>${formatINR(mo.expense)}</span>
+                </div>
+                <div class="month-net-row">
+                  <span class="month-net ${monthNet>=0?'amt-income':'amt-expense'}">${monthNet>=0?'+':''}${formatINR(monthNet)}</span>
+                  ${savingsBadge(monthNet, mo.income)}
+                </div>
+              </div>
+              <span class="material-icons month-chevron" id="month-chev-${monthKey}"
+                    style="transform:rotate(${isMoOpen?'0':'-90'}deg)">expand_more</span>
             </div>
-          </div>`;
+            <div class="month-body" id="month-body-${monthKey}" style="display:${isMoOpen?'block':'none'}">`;
+
+        /* transactions newest-first */
+        mo.items.sort((a,b) => new Date(b[0]) - new Date(a[0])).forEach(row => {
+          const cat  = categoryMap[row[5]] || { name:'Unknown', icon:'help' };
+          const acc  = accountMap[row[4]]  || { name:'Unknown', icon:'account_balance_wallet' };
+          const amt  = parseFloat(row[3]) || 0;
+          const d    = new Date(row[0]);
+          const day  = d.getDate().toString().padStart(2,'0');
+          const wday = d.toLocaleString('en-US',{weekday:'short'});
+
+          html += `
+            <div class="trans-card" onclick='openAddTrans(${JSON.stringify(row)})'>
+              <div class="trans-day-badge">${day}<span>${wday}</span></div>
+              <div class="trans-icon-box"><span class="material-icons opacity-50">${cat.icon}</span></div>
+              <div class="trans-info">
+                <div class="trans-title">${cat.name}</div>
+                <div class="trans-sub">
+                  <span class="material-icons" style="font-size:11px;color:var(--accent)">${acc.icon||'account_balance_wallet'}</span>
+                  <span>${acc.name}</span>
+                  ${row[1] ? `<span class="mx-1">•</span><span class="text-truncate">${row[1]}</span>` : ''}
+                </div>
+              </div>
+              <div class="trans-amt-box">
+                <div class="amt-val ${row[2]==='Income'?'amt-income':'amt-expense'}">${row[2]==='Income'?'+':'-'}${formatINR(amt)}</div>
+              </div>
+            </div>`;
+        });
+
+        html += `</div></div>`; /* close month-body + month-group */
       });
-      container.innerHTML += html + `</div>`;
+
+      html += `</div></div>`; /* close year-body + year-group */
+      container.innerHTML += html;
     });
   }
 
-  // Modal Handlers
-  function openDateFilter() { document.getElementById('dateFilterOverlay').classList.add('active'); document.getElementById('dateFilterSheet').classList.add('active'); }
-  function closeDateFilter() { document.getElementById('dateFilterOverlay').classList.remove('active'); document.getElementById('dateFilterSheet').classList.remove('active'); }
-  function openAdvancedFilter() { document.getElementById('advFilterOverlay').classList.add('active'); document.getElementById('advFilterSheet').classList.add('active'); }
+  /* ── modal handlers ──────────────────────────────────────────────── */
+  function openAdvancedFilter()  { document.getElementById('advFilterOverlay').classList.add('active');    document.getElementById('advFilterSheet').classList.add('active'); }
   function closeAdvancedFilter() { document.getElementById('advFilterOverlay').classList.remove('active'); document.getElementById('advFilterSheet').classList.remove('active'); }
+
+  /* stubs — kept so any legacy references don't throw errors */
+  function openDateFilter()       {}
+  function closeDateFilter()      {}
+  function applyDateFilter(range) { currentFilterRange = range; runMasterFilter(); }
 </script>

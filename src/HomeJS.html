@@ -3,26 +3,74 @@
   let activeCharts = [];
   const COLORS = ['#009688', '#5c6b73', '#689f38', '#e53935', '#1e88e5', '#795548', '#ffb300', '#f4511e'];
 
-  window.onload = () => google.script.run.withSuccessHandler(data => {
-    currentHomeData = data;
-    renderHome(data);
-  }).getHomeData();
+  function observeAndAnimate(canvasId, renderFn) {
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      renderFn();
+      return;
+    }
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          renderFn();
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+    observer.observe(el);
+  }
 
-  function loadHome() {
-    google.script.run.withSuccessHandler(data => {
-      currentHomeData = data;
-      renderHome(data);
-    }).getHomeData();
+  function constructHomeData(transactions, categories, accounts) {
+    let summary = { income: 0, expense: 0, total: 0 };
+    let accountBalances = {};
+    let catMap = {};
+
+    categories.forEach(c => {
+      catMap[c[0]] = { name: c[1], type: c[2], icon: c[3] || 'category', amount: 0 };
+    });
+
+    accounts.forEach(acc => {
+      accountBalances[acc[0]] = {
+        id: acc[0], name: acc[1], icon: acc[2] || 'account_balance',
+        balance: 0, totalIn: 0
+      };
+    });
+
+    transactions.forEach(row => {
+      const amount = parseFloat(row[3]) || 0;
+      const accID  = row[4];
+      const catID  = row[5];
+      const catInfo = catMap[catID];
+      if (catInfo && accountBalances[accID]) {
+        if (catInfo.type === 'Income') {
+          summary.income += amount;
+          accountBalances[accID].balance += amount;
+          accountBalances[accID].totalIn += amount;
+        } else {
+          summary.expense += amount;
+          accountBalances[accID].balance -= amount;
+        }
+        catMap[catID].amount += amount;
+      }
+    });
+
+    summary.total = summary.income - summary.expense;
+    return {
+      summary,
+      accounts:   Object.values(accountBalances),
+      categories: Object.values(catMap).filter(c => c.amount > 0)
+    };
   }
 
   function renderHome(data) {
-    document.getElementById('incomeText').innerText = formatINR(data.summary.income);
+    document.getElementById('incomeText').innerText  = formatINR(data.summary.income);
     document.getElementById('expenseText').innerText = formatINR(data.summary.expense);
-    document.getElementById('totalText').innerText = formatINR(data.summary.total);
+    document.getElementById('totalText').innerText   = formatINR(data.summary.total);
 
     let accHtml = '';
     data.accounts.forEach(acc => {
-      // Added onclick="openAccModal('${acc.id}')" and cursor:pointer
       accHtml += `<div class="acc-card" style="cursor:pointer">
         <div class="d-flex align-items-center mb-2">
           <span class="material-icons me-2" style="font-size:16px; color:var(--text-sec)">${acc.icon}</span>
@@ -34,15 +82,30 @@
     });
     document.getElementById('accountList').innerHTML = accHtml;
 
-    activeCharts.forEach(c => c.destroy());
+    activeCharts.forEach(c => { if (c) c.destroy(); });
     activeCharts = [];
 
-    activeCharts.push(initInteractiveChart('expenseChart', 'categoryList', data.categories.filter(c => c.type === 'Expense'), 'Expense', data.summary.expense));
-    activeCharts.push(initInteractiveChart('incomeChart', 'incomeCategoryList', data.categories.filter(c => c.type === 'Income'), 'Income', data.summary.income));
+    observeAndAnimate('expenseChart', () => {
+      const chart = initInteractiveChart(
+        'expenseChart', 'categoryList',
+        data.categories.filter(c => c.type === 'Expense'),
+        'Expense', data.summary.expense
+      );
+      if (chart) activeCharts.push(chart);
+    });
+
+    observeAndAnimate('incomeChart', () => {
+      const chart = initInteractiveChart(
+        'incomeChart', 'incomeCategoryList',
+        data.categories.filter(c => c.type === 'Income'),
+        'Income', data.summary.income
+      );
+      if (chart) activeCharts.push(chart);
+    });
   }
 
   function initInteractiveChart(canvasId, listId, cats, title, total) {
-    if (!cats.length) return;
+    if (!cats.length) return null;
     const ctx = document.getElementById(canvasId);
     cats.sort((a, b) => b.amount - a.amount);
 
@@ -55,25 +118,33 @@
       plugins: [ChartDataLabels, {
         id: 'centerText',
         afterDraw: (chart) => {
-          const { ctx, width, height } = chart;
-          const textSec = getComputedStyle(document.body).getPropertyValue('--text-sec');
-          const textMain = getComputedStyle(document.body).getPropertyValue('--text');
-          ctx.restore();
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillStyle = textSec; ctx.font = '14px Segoe UI';
-          ctx.fillText(title, width / 2, height / 2 - 12);
-          ctx.fillStyle = textMain; ctx.font = 'bold 18px Segoe UI';
-          ctx.fillText(formatINR(total), width / 2, height / 2 + 12);
-          ctx.save();
+          const { ctx: c, width: w, height: h } = chart;
+          const s  = getComputedStyle(document.body);
+          const ts = s.getPropertyValue('--text-sec').trim();
+          const tm = s.getPropertyValue('--text').trim();
+          c.restore();
+          c.textAlign = 'center'; c.textBaseline = 'middle';
+          c.fillStyle = ts || '#888'; c.font = '14px Segoe UI';
+          c.fillText(title, w / 2, h / 2 - 12);
+          c.fillStyle = tm || '#000'; c.font = 'bold 18px Segoe UI';
+          c.fillText(formatINR(total), w / 2, h / 2 + 12);
+          c.save();
         }
       }],
       options: {
-        responsive: true, maintainAspectRatio: false,
+        responsive: true,
+        maintainAspectRatio: false,
         layout: { padding: 45 },
         cutout: '70%',
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 1000,
+          easing: 'easeOutQuart'
+        },
         onClick: (evt, elements) => {
           if (elements.length > 0) {
-            const index = elements[0].index;
+            const index  = elements[0].index;
             const target = document.getElementById(`${listId}_item_${index}`);
             if (target) {
               document.querySelectorAll('.category-item').forEach(el => el.classList.remove('highlight'));
@@ -86,41 +157,55 @@
         plugins: {
           legend: { display: false },
           datalabels: {
-            color: '#fff', font: { size: 10, weight: 'bold' }, align: 'end', anchor: 'end', offset: 10,
-            formatter: (v, c) => `${c.chart.data.labels[c.dataIndex]}\n(${((v/total)*100).toFixed(0)}%)`
+            color: function() {
+              return getComputedStyle(document.body).getPropertyValue('--text').trim() || '#000';
+            },
+            font: { size: 10, weight: 'bold' },
+            align: 'end', anchor: 'end', offset: 10,
+            formatter: (v, c) => `${c.chart.data.labels[c.dataIndex]}\n(${((v / total) * 100).toFixed(0)}%)`
           }
         }
       }
     });
 
-    // Spin Logic
+    // Spin gesture
     let isDragging = false, startAngle = 0, currentRotation = 0;
     const getAngle = (x, y) => {
-      const rect = ctx.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2, centerY = rect.top + rect.height / 2;
+      const rect    = ctx.getBoundingClientRect();
+      const centerX = rect.left + rect.width  / 2;
+      const centerY = rect.top  + rect.height / 2;
       return Math.atan2(y - centerY, x - centerX);
     };
-    const start = (e) => { isDragging = true; const pos = e.touches ? e.touches[0] : e; startAngle = getAngle(pos.clientX, pos.clientY) - currentRotation; };
+    const start = (e) => {
+      isDragging = true;
+      const pos  = e.touches ? e.touches[0] : e;
+      startAngle = getAngle(pos.clientX, pos.clientY) - currentRotation;
+    };
     const move = (e) => {
-      if (!isDragging) return; e.preventDefault();
-      const pos = e.touches ? e.touches[0] : e;
+      if (!isDragging) return;
+      e.preventDefault();
+      const pos       = e.touches ? e.touches[0] : e;
       currentRotation = getAngle(pos.clientX, pos.clientY) - startAngle;
       chart.options.rotation = currentRotation * (180 / Math.PI);
       chart.update('none');
     };
     const stop = () => isDragging = false;
-    ctx.addEventListener('mousedown', start); ctx.addEventListener('touchstart', start);
-    window.addEventListener('mousemove', move); window.addEventListener('touchmove', move, { passive: false });
-    window.addEventListener('mouseup', stop); window.addEventListener('touchend', stop);
+    ctx.addEventListener('mousedown', start);
+    ctx.addEventListener('touchstart', start);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('mouseup', stop);
+    window.addEventListener('touchend', stop);
 
     let listHtml = '';
     cats.forEach((c, i) => {
       listHtml += `<div id="${listId}_item_${i}" class="category-item d-flex justify-content-between">
-        <span><span class="material-icons align-middle me-2" style="font-size:14px; color:${COLORS[i%COLORS.length]}">${c.icon}</span>${c.name}</span>
+        <span><span class="material-icons align-middle me-2" style="font-size:14px; color:${COLORS[i % COLORS.length]}">${c.icon}</span>${c.name}</span>
         <span class="fw-bold">${formatINR(c.amount)}</span>
       </div>`;
     });
     document.getElementById(listId).innerHTML = listHtml;
+
     return chart;
   }
 </script>

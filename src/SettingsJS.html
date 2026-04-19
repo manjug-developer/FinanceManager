@@ -77,6 +77,16 @@
     }
   }
 
+  function openAboutModal() {
+    document.getElementById('aboutOverlay').classList.add('active');
+    document.getElementById('aboutModal').classList.add('active');
+  }
+
+  function closeAboutModal() {
+    document.getElementById('aboutOverlay').classList.remove('active');
+    document.getElementById('aboutModal').classList.remove('active');
+  }
+
   // Event listeners for browser fullscreen changes
   document.addEventListener('fullscreenchange', () => updateFSUI());
   document.addEventListener('webkitfullscreenchange', () => updateFSUI());

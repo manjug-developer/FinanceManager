@@ -1,40 +1,39 @@
 <script>
   let currentAtType = 'Expense';
-  let editingTransactionId = null; // Track if we are editing
+  let editingTransactionId = null;
 
+  /* ── Open / Close modal ────────────────────────────── */
   function openAddTrans(existingData = null) {
-    const categories = typeof categoryMap !== 'undefined' ? categoryMap : {};
-    const accounts = typeof accountMap !== 'undefined' ? accountMap : {};
+    console.log("Opening Add Transaction Modal", categoryMap, accountMap);
 
     if (existingData) {
       // EDIT MODE
-      editingTransactionId = existingData[6]; // ID column
+      editingTransactionId = existingData[6];
       document.getElementById('atAmount').value = existingData[3];
-      document.getElementById('atNotes').value = existingData[1];
-      document.getElementById('atDate').value = new Date(existingData[0]).toISOString().split('T')[0];
-      
-      // Update UI Header
+      document.getElementById('atNotes').value  = existingData[1];
+      document.getElementById('atDate').value   = new Date(existingData[0]).toISOString().split('T')[0];
+
       document.querySelector('#addTransModal h5').innerText = "Edit Transaction";
-      setTransType(existingData[2]); 
-      
-      // Set dropdown values after they populate
+      document.getElementById('atDeleteBtn').style.display = 'block';
+      setTransType(existingData[2]);
+
       setTimeout(() => {
-        document.getElementById('atCategory').value = existingData[5];
-        document.getElementById('atAccount').value = existingData[4];
-        updateAtCatIcon();
+        selectAtCategory(existingData[5]);
+        selectAtAccount(existingData[4]);
       }, 50);
 
     } else {
       // NEW MODE
       editingTransactionId = null;
       document.getElementById('atAmount').value = '';
-      document.getElementById('atNotes').value = '';
-      document.getElementById('atDate').value = new Date().toISOString().split('T')[0];
-      document.getElementById('atTime').value = new Date().toTimeString().slice(0,5);
+      document.getElementById('atNotes').value  = '';
+      document.getElementById('atDate').value   = new Date().toISOString().split('T')[0];
+      document.getElementById('atTime').value   = new Date().toTimeString().slice(0, 5);
       document.querySelector('#addTransModal h5').innerText = "New Transaction";
+      document.getElementById('atDeleteBtn').style.display = 'none';
       setTransType('Expense');
     }
-    
+
     document.getElementById('addTransOverlay').classList.add('active');
     document.getElementById('addTransModal').classList.add('active');
   }
@@ -44,65 +43,170 @@
     document.getElementById('addTransModal').classList.remove('active');
   }
 
+  /* ── Transaction type toggle ────────────────────────── */
   function setTransType(type) {
     currentAtType = type;
     document.querySelectorAll('.type-pill').forEach(p => p.classList.remove('active'));
-    const btn = document.getElementById('btnType' + type.substring(0,3));
-    if(btn) btn.classList.add('active');
-    populateAtDropdowns();
-  }
+    const btn = document.getElementById('btnType' + type.substring(0, 3));
+    if (btn) btn.classList.add('active');
 
-  function populateAtDropdowns() {
-    const catSel = document.getElementById('atCategory');
-    const accSel = document.getElementById('atAccount');
+    // Reset category when type changes — category list changes
+    document.getElementById('atCategory').value  = '';
+    document.getElementById('atCatLabel').innerText = 'Select category';
+    document.getElementById('atCatIcon').innerText  = 'category';
+
+    // Auto-select first category of the new type
     const categories = typeof categoryMap !== 'undefined' ? categoryMap : {};
+    const first = Object.keys(categories).find(id => categories[id].type === type);
+    if (first) selectAtCategory(first);
+
+    // Auto-select first account if none selected
     const accounts = typeof accountMap !== 'undefined' ? accountMap : {};
-    
-    let catHtml = '';
-    for (let id in categories) {
-      if (categories[id].type === currentAtType) {
-        catHtml += `<option value="${id}">${categories[id].name}</option>`;
-      }
+    if (!document.getElementById('atAccount').value) {
+      const firstAcc = Object.keys(accounts)[0];
+      if (firstAcc) selectAtAccount(firstAcc);
     }
-    catSel.innerHTML = catHtml || '<option value="">No Categories</option>';
-    
-    let accHtml = '';
-    for (let id in accounts) {
-      accHtml += `<option value="${id}">${accounts[id].name}</option>`;
-    }
-    accSel.innerHTML = accHtml || '<option value="">No Accounts</option>';
-    updateAtCatIcon();
   }
 
-  function updateAtCatIcon() {
-    const catId = document.getElementById('atCategory').value;
+  /* ── Category Picker ────────────────────────────────── */
+  function openAtCatPicker() {
     const categories = typeof categoryMap !== 'undefined' ? categoryMap : {};
-    if (categories[catId]) {
-      document.getElementById('atCatIcon').innerText = categories[catId].icon || 'category';
-    }
+    const currentId  = document.getElementById('atCategory').value;
+
+    // Label pill color
+    const badge = document.getElementById('atCatPickerType');
+    badge.innerText = currentAtType;
+    badge.style.background = currentAtType === 'Income'
+      ? 'rgba(40,167,69,0.15)' : 'rgba(239,68,68,0.15)';
+    badge.style.color = currentAtType === 'Income' ? '#28a745' : '#ff5252';
+
+    const filtered = Object.keys(categories).filter(id => categories[id].type === currentAtType);
+    document.getElementById('atCatOptionsList').innerHTML = filtered.map(id => {
+      const cat = categories[id];
+      const isSelected = id === currentId;
+      return `
+        <div class="at-picker-option ${isSelected ? 'selected' : ''}" onclick="selectAtCategory('${id}'); closeAtCatPicker();">
+          <div class="opt-icon" style="background:${currentAtType === 'Income' ? 'rgba(40,167,69,0.12)' : 'rgba(239,68,68,0.12)'}; color:${currentAtType === 'Income' ? '#28a745' : '#ff5252'};">
+            <span class="material-icons">${cat.icon || 'category'}</span>
+          </div>
+          <span class="opt-name">${cat.name}</span>
+          <span class="material-icons opt-check">check_circle</span>
+        </div>`;
+    }).join('');
+
+    document.getElementById('atCatPickerOverlay').classList.add('active');
+    document.getElementById('atCatPickerSheet').classList.add('active');
   }
 
+  function closeAtCatPicker() {
+    document.getElementById('atCatPickerOverlay').classList.remove('active');
+    document.getElementById('atCatPickerSheet').classList.remove('active');
+  }
+
+  function selectAtCategory(id) {
+    const categories = typeof categoryMap !== 'undefined' ? categoryMap : {};
+    const cat = categories[id];
+    if (!cat) return;
+    document.getElementById('atCategory').value    = id;
+    document.getElementById('atCatLabel').innerText = cat.name;
+    document.getElementById('atCatIcon').innerText  = cat.icon || 'category';
+  }
+
+  /* ── Account Picker ─────────────────────────────────── */
+  function openAtAccPicker() {
+    const accounts  = typeof accountMap !== 'undefined' ? accountMap : {};
+    const currentId = document.getElementById('atAccount').value;
+
+    document.getElementById('atAccOptionsList').innerHTML = Object.keys(accounts).map(id => {
+      const acc = accounts[id];
+      const isSelected = id === currentId;
+      return `
+        <div class="at-picker-option ${isSelected ? 'selected' : ''}" onclick="selectAtAccount('${id}'); closeAtAccPicker();">
+          <div class="opt-icon" style="background:rgba(99,102,241,0.12); color:#6366f1;">
+            <span class="material-icons">${acc.icon || 'account_balance_wallet'}</span>
+          </div>
+          <span class="opt-name">${acc.name}</span>
+          <span class="material-icons opt-check">check_circle</span>
+        </div>`;
+    }).join('');
+
+    document.getElementById('atAccPickerOverlay').classList.add('active');
+    document.getElementById('atAccPickerSheet').classList.add('active');
+  }
+
+  function closeAtAccPicker() {
+    document.getElementById('atAccPickerOverlay').classList.remove('active');
+    document.getElementById('atAccPickerSheet').classList.remove('active');
+  }
+
+  function selectAtAccount(id) {
+    const accounts = typeof accountMap !== 'undefined' ? accountMap : {};
+    const acc = accounts[id];
+    if (!acc) return;
+    document.getElementById('atAccount').value    = id;
+    document.getElementById('atAccLabel').innerText = acc.name;
+    document.getElementById('atAccIcon').innerText  = acc.icon || 'account_balance_wallet';
+  }
+
+  /* ── Submit ─────────────────────────────────────────── */
   function submitNewTransaction() {
-    const amount = document.getElementById('atAmount').value;
-    if (!amount || amount <= 0) return alert("Enter valid amount");
+    const amount     = document.getElementById('atAmount').value;
+    const categoryId = document.getElementById('atCategory').value;
+    const accountId  = document.getElementById('atAccount').value;
+
+    if (!amount || amount <= 0)  return alert("Enter valid amount");
+    if (!categoryId)             return alert("Select a category");
+    if (!accountId)              return alert("Select an account");
 
     const formData = {
-      id: editingTransactionId, // Will be null for new, ID for edit
+      id: editingTransactionId,
       type: currentAtType,
-      amount: amount,
-      date: document.getElementById('atDate').value,
-      notes: document.getElementById('atNotes').value,
-      categoryId: document.getElementById('atCategory').value,
-      accountId: document.getElementById('atAccount').value
+      amount,
+      date: new Date((document.getElementById('atDate').value) + 'T00:00:00')
+              .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+              .replace(/ /g, '-'),
+      notes:      document.getElementById('atNotes').value,
+      categoryId,
+      accountId
     };
 
-    // If editingTransactionId exists, call update, else call save
-    const serverFunction = editingTransactionId ? 'updateTransaction' : 'saveNewTransaction';
+    showLoader();
+    if (!editingTransactionId) {
+      google.script.run.withSuccessHandler(() => {
+        google.script.run.withSuccessHandler(data => {
+          window.MasterData = data;
+          closeAddTrans();
+          loadTransactions();
+          loadHomeData();
+          hideLoader();
+        }).loadMasterData();
+      }).addGenericRow('Transactions', ["'" + formData.date, formData.type, formData.amount, formData.accountId, formData.categoryId, formData.notes]);
+    } else {
+      google.script.run.withSuccessHandler(() => {
+        google.script.run.withSuccessHandler(data => {
+          window.MasterData = data;
+          closeAddTrans();
+          loadTransactions();
+          loadHomeData();
+          hideLoader();
+        }).loadMasterData();
+      }).updateGenericRow('Transactions', editingTransactionId, ["'" + formData.date, formData.type, formData.amount, formData.accountId, formData.categoryId, formData.notes]);
+    }
+  }
 
+  /* ── Delete ─────────────────────────────────────────── */
+  function deleteCurrentTransaction() {
+    if (!editingTransactionId) return;
+    if (!confirm("Delete this transaction?")) return;
+    showLoader();
     google.script.run.withSuccessHandler(() => {
-      closeAddTrans();
-      if (typeof loadTransactions === 'function') loadTransactions();
-      if (typeof loadHome === 'function') loadHome();
-    })[serverFunction](editingTransactionId ? editingTransactionId : formData, editingTransactionId ? [formData.date, formData.notes, formData.type, formData.amount, formData.accountId, formData.categoryId] : formData);
+      google.script.run.withSuccessHandler(data => {
+        window.MasterData = data;
+        closeAddTrans();
+        loadTransactions();
+        loadHomeData();
+        hideLoader();
+      }).loadMasterData();
+    }).deleteGenericRow('Transactions', editingTransactionId);
   }
 </script>

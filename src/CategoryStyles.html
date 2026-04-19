@@ -1,14 +1,11 @@
 <style>
   /* Header Circular Button */
   .add-btn-wrapper {
-    width: 48px;
-    height: 48px;
+    width: 48px; height: 48px;
     background: var(--accent);
     color: white;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
     transition: transform 0.1s;
@@ -18,27 +15,75 @@
   .add-btn-wrapper .material-icons { font-size: 28px; }
 
   /* Type Switcher (Income/Expense) */
-  .category-type-switcher { background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid var(--border); }
-  .type-btn { flex: 1; text-align: center; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; color: var(--text-sec); transition: 0.2s; }
+  .category-type-switcher { 
+    background: var(--card-bg); 
+    border-radius: 12px; 
+    border: 1px solid var(--border); 
+  }
+  .type-btn { 
+    flex: 1; text-align: center; padding: 10px; border-radius: 10px; 
+    font-size: 14px; font-weight: 600; cursor: pointer; 
+    color: var(--text-sec); transition: 0.2s; 
+  }
   .type-btn.active { background: var(--accent); color: white; }
 
   /* Category List Cards */
-  .cat-item-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; transition: background 0.2s; }
+  .cat-item-card { 
+    background: var(--card-bg); 
+    border: 1px solid var(--border); 
+    border-radius: 16px; padding: 14px; margin-bottom: 10px; 
+    display: flex; align-items: center; transition: background 0.2s; 
+  }
   .cat-item-card:active { background: rgba(255,255,255,0.05); }
-  .cat-icon-box { width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; margin-right: 15px; border: 1px solid var(--border); }
-  
+  .cat-icon-box { 
+    width: 42px; height: 42px; border-radius: 12px; 
+    background: var(--bg); 
+    display: flex; align-items: center; justify-content: center; 
+    margin-right: 15px; border: 1px solid var(--border); 
+  }
+
   /* Modal Icon Picker Grid */
-  .icon-grid { 
-    display: grid; 
-    grid-template-columns: repeat(6, 1fr); 
-    gap: 8px; 
-    max-height: 220px; 
-    overflow-y: auto; 
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
     padding: 10px;
-    background: rgba(0,0,0,0.15);
+    background: var(--bg);
     border-radius: 12px;
     border: 1px solid var(--border);
   }
-  .icon-option { padding: 8px; border-radius: 8px; text-align: center; border: 1px solid transparent; cursor: pointer; color: var(--text-sec); }
-  .icon-option.selected { border-color: var(--accent); background: rgba(37, 99, 235, 0.2); color: var(--accent); }
+  .icon-option { 
+    padding: 8px; border-radius: 8px; text-align: center; 
+    border: 1px solid transparent; cursor: pointer; color: var(--text-sec); 
+  }
+  .icon-option.selected { 
+    border-color: var(--accent); 
+    background: rgba(37, 99, 235, 0.2); 
+    color: var(--accent); 
+  }
+
+  .full-height-modal {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: var(--bg);
+    z-index: 3000;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0s;
+    overflow-y: auto;
+    display: block;
+  }
+  .full-height-modal.active {
+    bottom: 0;
+    transform: translateY(0);
+  }
+
+  /* Category bottom sheet modal also uses vars */
+  #categoryModal.theme-modal {
+    background: var(--card-bg);
+    color: var(--text);
+  }
 </style>

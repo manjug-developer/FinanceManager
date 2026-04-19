@@ -14,6 +14,11 @@
     <?!= include('AccountStyles'); ?>
   </head>
   <body data-theme="Dark">
+    
+    <div id="global-loader" class="loader-container">
+      <div class="loader-bar"></div>
+    </div>
+
     <div class="app-container">
       <?!= include('AddTransView'); ?>
       <?!= include('HomeView'); ?>
@@ -24,7 +29,9 @@
       <?!= include('AccountView'); ?>
     </div>
 
-    <div class="plus-btn" onclick="openAddTrans()"><span class="material-icons">add</span></div>
+    <div id="globalAddBtn" class="plus-btn" onclick="openAddTrans()" style="display:none;">
+      <span class="material-icons">add</span>
+    </div>
     
     <div class="bottom-nav">
       <div class="nav-item active" onclick="showView('home')"><span class="material-icons">home</span><br>Home</div>

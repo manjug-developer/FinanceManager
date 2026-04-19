@@ -1,20 +1,3 @@
-/**
- * CATEGORY BACKEND - V1.4
- */
-function getCategoryData() {
-  const SPREADSHEET_ID = '17zgFTafrG5Ql_1jZdLEadztqsre44jvYmUkROBVnLv4';
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheet = ss.getSheetByName('Categories');
-  const data = sheet.getDataRange().getValues().slice(1);
-  
-  return data.map(row => ({
-    id: row[0],
-    name: row[1],
-    type: row[2],
-    icon: row[3] || 'category'
-  }));
-}
-
 function saveCategory(category) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName('Categories');
